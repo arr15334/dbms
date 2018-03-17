@@ -7,11 +7,11 @@ var databases = require('./routes/databases');
 var app = express();
 
 const path = '/Usuarios/Rodrigo/UVG/4/1/Bases de datos/Proyecto1/databases/';
-let db = ''
 
 app.set('view engine', 'ejs');
 
-app.use(bodyParser.urlencoded({ extended: true }));
+//app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json())
 app.use(express.static('public'));
 
 app.use('/', index);
@@ -35,7 +35,14 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
+app.post('/query', function (req, res) {
+    const query = req.body.inputQuery
+    if (query.includes('CREATE')) {
+        if (query.includes('DATABASE')) {
 
+        }
+    }
+})
 
 
 

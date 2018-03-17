@@ -2,23 +2,24 @@ var express = require('express');
 var router = express.Router();
 var fs = require('fs');
 
-let db = ''
+db = ''
 const path = '/Usuarios/Rodrigo/UVG/4/1/Bases de datos/Proyecto1/databases/';
-/* GET home page. */
+
 router.post('/', function (req, res) {
     const dbName = req.body.name
     createDatabase(dbName)
-    res.redirect('/')
+    res.send('created')
 });
 
-router.post('/'+db+'/tables', function (req, res) {
-    if (!db) {
-        res.send('No ha especificado la base de datos')
-    }
-    const query = req.body.querysql;
-    console.log(query);
-    createTable(query);
-    res.redirect('/')
+router.post('/:db/tables', function (req, res) {
+    const db = req.params.db || ''
+    if (!db) res.send('no db specified')
+
+    const tableName = req.body['table_name'];
+
+    const columns = req.body['columns']
+    createTable(db, tableName, columns);
+    res.send('created table for '+db)
 });
 
 router.post('/'+db+'/rename', function (req, res) {
@@ -45,11 +46,12 @@ function getTables(path) {
     return fs.readdirSync(path)
 }
 
-function createTable(name) {
+function createTable(db, name, columns) {
     fs.open(path+db+'/'+name+'.txt', 'w', function(err){
         if (err) console.log(err);
         console.log('created')
     })
+
 }
 
 function createDatabase(name) {
@@ -57,7 +59,7 @@ function createDatabase(name) {
 }
 
 function renameTable(name, newName) {
-    fs.rename(path+name+'.txt', path+newName+'.txt', function (err) {
+    fs.rename(path+db+'/'+name+'.txt', path+db+'/'+newName+'.txt', function (err) {
         if (err) console.log(err);
         console.log('renamed')
     })
