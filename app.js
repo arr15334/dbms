@@ -1,8 +1,8 @@
 var express = require('express');
 var bodyParser = require('body-parser');
-var fs = require('fs');
+
 var index = require('./routes/index');
-var users = require('./routes/users');
+var databases = require('./routes/databases');
 
 var app = express();
 
@@ -15,29 +15,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 app.use('/', index);
+app.use('/databases', databases)
 
-app.post('/createDatabase', function (req, res) {
-    const dbName = req.body.name
-    createDatabase(dbName)
-    res.redirect('/')
-})
-app.post('/createTable', function (req, res) {
-    const query = req.body.querysql;
-    console.log(query);
-    createTable(query);
-    res.redirect('/')
-});
-app.post('/rename', function (req, res) {
-    const query = req.body.querysql;
-    console.log(query);
-    // renameTable(query)
-    res.redirect('/')
-});
-
-app.get('/databases', function (req, res) {
-    const dbs = getDatabases()
-    res.render("showdbs", {dbs: dbs})
-})
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
@@ -56,27 +35,9 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-function createTable(name) {
-    fs.open(path+name+'.txt', 'w', function(err){
-        if (err) console.log(err);
-        console.log('created')
-    })
-}
 
-function createDatabase(name) {
-    fs.mkdirSync(path+name)
-}
 
-function renameTable(name, newName) {
-    fs.rename(path+name+'.txt', path+newName+'.txt', function (err) {
-        if (err) console.log(err);
-        console.log('renamed')
-    })
-}
 
-function getDatabases () {
-    return fs.readdirSync(path)
-}
 
 app.listen(3000, function(){
   console.log("...listening...")
