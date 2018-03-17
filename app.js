@@ -39,7 +39,7 @@ app.post('/query', function (req, res) {
     const query = req.body.inputQuery
     if (query.includes('CREATE')) {
         if (query.includes('DATABASE')) {
-
+            console.log("db")
         }
     }
 })

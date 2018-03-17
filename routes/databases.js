@@ -12,6 +12,7 @@ router.post('/', function (req, res) {
 });
 
 router.post('/:db/tables', function (req, res) {
+    // TODO añadir constraints
     const db = req.params.db || ''
     if (!db) res.send('no db specified')
 
@@ -22,55 +23,74 @@ router.post('/:db/tables', function (req, res) {
     res.send('created table for '+db)
 });
 
-router.post('/'+db+'/rename', function (req, res) {
-    const query = req.body.querysql;
-    console.log(query);
-    // renameTable(query)
-    res.redirect('/')
+router.put('/:db/rename', function (req, res) {
+    const newName = req.body['new_name']
+    const oldName = req.params.db
+    renameDatabase(oldName, newName)
+    res.send('changed name')
 });
+
+router.delete('/:db/drop', function (req, res) {
+    const db = req.params.db || ''
+    deleteDatabase(db)
+    res.send('deleted')
+})
 
 router.get('/', function (req, res) {
     const dbs = getDatabases()
     res.render("showdbs", {dbs: dbs})
+    // res.json(dbs)
 })
 
-router.get('/'+db+'/tables', function (req, res) {
+router.get('/:db/tables', function (req, res) {
+    const db = req.params.db
+    res.send(getTables(db))
+})
 
+router.put('/:db/tables/:tableName', (req, res) => {
+    const db = req.params.db
+    const oldName = req.params.tableName
+    const newName = req.body['new_name']
+    renameTable(db, oldName, newName)
+    res.send('name changed to '+newName)
 })
 
 function getDatabases () {
     return fs.readdirSync(path)
 }
 
-function getTables(path) {
-    return fs.readdirSync(path)
+function getTables(db) {
+    return fs.readdirSync(path+db)
 }
 
 function createTable(db, name, columns) {
-    fs.open(path+db+'/'+name+'.txt', 'w', function(err){
-        if (err) console.log(err);
-        console.log('created')
-    })
-
+    let data = ''
+    for (column of columns) {
+        data += column.type+' '+column.name+';'
+    }
+    fs.writeFileSync(path+db+'/'+name+'.txt', data)
 }
 
 function createDatabase(name) {
     fs.mkdirSync(path+name)
 }
 
-function renameTable(name, newName) {
-    fs.rename(path+db+'/'+name+'.txt', path+db+'/'+newName+'.txt', function (err) {
-        if (err) console.log(err);
-        console.log('renamed')
-    })
-}
-
-function deleteTable(table) {
-    fs.unlinkSync(path+db+'/'+table)
+function renameDatabase(name, newName) {
+    fs.renameSync(path+name, path+newName)
 }
 
 function deleteDatabase(db) {
     fs.rmdirSync(path+db)
+}
+
+function renameTable(db, name, newName) {
+    fs.renameSync(path+db+'/'+name+'.txt', path+db+'/'+newName)
+}
+
+
+
+function deleteTable(table) {
+    fs.unlinkSync(path+db+'/'+table)
 }
 
 function useDatabase(datab) {
