@@ -44,8 +44,6 @@ app.post('/query', function (req, res) {
     }
 })
 
-
-
 app.listen(3000, function(){
-  console.log("...listening...")
+  console.log("http:/localhost:3000")
 });
