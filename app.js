@@ -1,6 +1,6 @@
 var express = require('express');
 var bodyParser = require('body-parser');
-
+var cors = require('cors')
 var index = require('./routes/index');
 var databases = require('./routes/databases');
 
@@ -13,7 +13,7 @@ app.set('view engine', 'ejs');
 //app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json())
 app.use(express.static('public'));
-
+app.use(cors())
 app.use('/', index);
 app.use('/databases', databases)
 

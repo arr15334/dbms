@@ -38,13 +38,12 @@ router.delete('/:db/drop', function (req, res) {
 
 router.get('/', function (req, res) {
     const dbs = getDatabases()
-    res.render("showdbs", {dbs: dbs})
-    // res.json(dbs)
+    res.json(dbs)
 })
 
 router.get('/:db/tables', function (req, res) {
     const db = req.params.db
-    res.send(getTables(db))
+    res.json(getTables(db))
 })
 
 router.put('/:db/tables/:tableName', (req, res) => {
@@ -56,15 +55,24 @@ router.put('/:db/tables/:tableName', (req, res) => {
 })
 
 function getDatabases () {
-    return fs.readdirSync(path)
+    return {
+        data: {
+            dbs: fs.readdirSync(path)
+        }
+    }
 }
 
 function getTables(db) {
-    return fs.readdirSync(path+db)
+    return {
+        data: {
+            tables: fs.readdirSync(path+db)
+        }
+    }
 }
 
 function createTable(db, name, columns) {
     let data = ''
+
     for (column of columns) {
         data += column.type+' '+column.name+';'
     }
