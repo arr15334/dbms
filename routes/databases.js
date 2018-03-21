@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var fs = require('fs');
+var rimraf = require('rimraf')
 
 db = ''
 const path = '/Usuarios/Rodrigo/UVG/4/1/Bases de datos/Proyecto1/databases/';
@@ -54,6 +55,13 @@ router.put('/:db/tables/:tableName', (req, res) => {
     res.send('name changed to '+newName)
 })
 
+router.delete('/:db/tables/:tableName', (req, res) => {
+  const db = req.params.db
+  const tableName = req.params.tableName
+  deleteTable(db, tableName)
+  res.send('deleted table ' + tableName)
+})
+
 function getDatabases () {
     return {
         data: {
@@ -76,7 +84,7 @@ function createTable(db, name, columns) {
     for (column of columns) {
         data += column.type+' '+column.name+';'
     }
-    fs.writeFileSync(path+db+'/'+name+'.txt', data)
+    fs.writeFileSync(path+db+'/'+name, data)
 }
 
 function createDatabase(name) {
@@ -88,16 +96,15 @@ function renameDatabase(name, newName) {
 }
 
 function deleteDatabase(db) {
-    fs.rmdirSync(path+db)
+    rimraf.sync(path+db)
+    // fs.rmdirSync(path+db)
 }
 
 function renameTable(db, name, newName) {
     fs.renameSync(path+db+'/'+name+'.txt', path+db+'/'+newName)
 }
 
-
-
-function deleteTable(table) {
+function deleteTable(db, table) {
     fs.unlinkSync(path+db+'/'+table)
 }
 
