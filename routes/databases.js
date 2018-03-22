@@ -117,6 +117,4 @@ function useDatabase(datab) {
     db = datab
 }
 
-
-
 module.exports = router;
