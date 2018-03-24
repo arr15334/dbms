@@ -1,8 +1,12 @@
 var express = require('express');
 var bodyParser = require('body-parser');
-var cors = require('cors')
+var cors = require('cors');
+var antlr4 = require('antlr4');
+
 var index = require('./routes/index');
 var databases = require('./routes/databases');
+var sql92Lexer = require('./grammar/sql92Lexer')
+var sql92Parser = require('./grammar/sql92Parser')
 
 var app = express();
 
@@ -14,35 +18,20 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.json())
 app.use(express.static('public'));
 app.use(cors())
-app.use('/', index);
-app.use('/databases', databases)
-
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
-});
-
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
 
 app.post('/query', function (req, res) {
-    const query = req.body.inputQuery
-    if (query.includes('CREATE')) {
-        if (query.includes('DATABASE')) {
-            console.log("db")
-        }
-    }
+    const sqlQuery = req.body['sqlQuery']
+    var chars = new antlr4.InputStream(sqlQuery);
+  	var lexer = new sql92Lexer.sql92Lexer(chars);
+  	var tokens = new antlr4.CommonTokenStream(lexer);
+  	var parser = new sql92Parser.sql92Parser(tokens);
+  	parser.buildParseTrees = true;
+  	var tree = parser.program();
+    // cambiar lo que devuelve
+	  res.send(tree.toStringTree())
 })
+app.use('/', index);
+app.use('/databases', databases)
 
 app.listen(3000, function(){
   console.log("http:/localhost:3000")
