@@ -3,8 +3,8 @@ var router = express.Router();
 var fs = require('fs');
 var rimraf = require('rimraf')
 
-db = ''
-const path = '/Usuarios/Rodrigo/UVG/4/1/Bases de datos/Proyecto1/databases/';
+var db = ''
+const path = './databases/';
 
 router.post('/', function (req, res) {
     const dbName = req.body.name

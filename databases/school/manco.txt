@@ -9,7 +9,7 @@
 }
 
 'manco': {
-  columns: [
+  'columns': [
     name:
     type:
   ],
