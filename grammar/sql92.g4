@@ -20,7 +20,7 @@ columnDeclaration: ID dataType;
 dataType: 'INT'
             | 'FLOAT'
             | 'DATE'
-            | 'CHAR' '(' NUM ')';   
+            | 'CHAR' '(' NUM ')';
 
 constraintDeclaration: 'CONSTRAINT' constraint;
 
