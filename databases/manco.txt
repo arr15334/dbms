@@ -1,0 +1,48 @@
+{
+  name: manco
+  columns: [
+    {
+      name:
+      tipo:
+    }
+  ]
+}
+
+'manco': {
+    "columns": {
+        "name": {
+            "type": "int"
+        }
+    },
+    "constraints" : {
+
+    }
+
+    // Constraints pendientes
+  constraints: {
+      primaryKey: {
+        name:
+        elements: []
+      },
+      foreignKey: {
+        name:
+        elements: []
+        referenceTable:
+        referenceColumn:
+      },
+      check: {
+        name:  ,
+        expression: [
+          operando1 : [
+            expression : [
+
+            ]
+          ],
+          operando2: [
+            literal: " 123sadsf"
+          ],
+          operador: and
+        ]
+      }
+  }
+}
