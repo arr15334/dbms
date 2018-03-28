@@ -7,21 +7,24 @@ function id(x) { return x[0]; }
 const moo = require('moo');
 
 let lexer = moo.compile({
-	keyword:	['KEY', 'PRIMARY', 'FOREIGN', 'CHECK',  'CONSTRAINT', 'NOT', 'AND', 'OR', 'PK_', 'REFERENCES'],
+	keyword:	['KEY', 'PRIMARY', 'FOREIGN', 'CHECK',  'CONSTRAINT', 'NOT', 'AND', 'OR', 'PK_', 'REFERENCES', 'CH_'],
 	varType: ['INT', 'FLOAT', 'DATE', 'CHAR'],
 	command: ['CREATE', 'ALTER', 'RENAME', 'TO', 'DROP', 'SHOW', 'USE', 'FROM'],
 	object: ['DATABASE', 'DATABASES', 'TABLE', 'TABLES', 'COLUMNS', 'COLUMN'],
 	ws: 		{match: /\s+/, lineBreaks: true},
 	id:			/[a-zA-Z][a-zA-Z0-9]*/,
-	num:		/[0-9] [0-9]*/,
+	num:		/[0-9][0-9]*/,
 	';': ';',
 	'(': '(',
 	')': ')',
 	',': ',',
 	'*': '*',
+	'<=': '<=',
+	'>=': '>=',
 	'>': '>',
 	'<': '<',
-	'<>': '<>'
+	'<>': '<>',
+	'=': '='
 })
 
 lexer.next = (next => () => {
@@ -83,10 +86,10 @@ var grammar = {
     {"name": "expression", "symbols": ["expression", "relOp", "expression"]},
     {"name": "expression", "symbols": ["expression", {"literal":"AND"}, "expression"]},
     {"name": "expression", "symbols": ["expression", {"literal":"OR"}, "expression"]},
-    {"name": "relOp", "symbols": [{"literal":"<"}]},
-    {"name": "relOp", "symbols": [{"literal":">"}]},
     {"name": "relOp", "symbols": [{"literal":"<="}]},
     {"name": "relOp", "symbols": [{"literal":">="}]},
+    {"name": "relOp", "symbols": [{"literal":"<"}]},
+    {"name": "relOp", "symbols": [{"literal":">"}]},
     {"name": "relOp", "symbols": [{"literal":"<>"}]},
     {"name": "relOp", "symbols": [{"literal":"="}]}
 ]
