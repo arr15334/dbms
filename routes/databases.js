@@ -39,7 +39,12 @@ function formatQuery () {
   let finalQuery = {
     action: '',
     object: '',
-    id: []
+    id: {
+      name: '',
+      newName: ''
+    },
+    columns: {},
+    constraints: {}
   }
   let columns = []
   let constraints = []
@@ -54,14 +59,24 @@ function formatQuery () {
         finalQuery.object = statement.value
       }
       if (statement.type === 'id' && !isColumn) {
-        finalQuery.id.push(statement.value)
+        if (finalQuery.id.name) {
+          finalQuery.id.newName = statement.value
+        } else {
+          finalQuery.id.name = statement.value
+        }
       }
       if (statement.type === 'column') {
-        columns.push({name: statement.column.name.value, type: statement.column.type[0].value || statement.column.type})
+        const key = statement.column.name.value
+        finalQuery.columns[key] = {}
+        finalQuery.columns[key].type = statement.column.type[0].value || statement.column.type
+        // columns.push({name: statement.column.name.value, type: statement.column.type[0].value || statement.column.type})
         isColumn++
       }
       if (statement.type === 'primaryKey') {
+        finalQuery.constraints.primaryKey = {}
         elems = formatAst(statement.primaryKey.elems)
+        finalQuery.constraints.primaryKey.name = statement.primaryKey.name.value
+        finalQuery.constraints.primaryKey.elems = elems
         constraints.push({
           type: 'PK',
           name: statement.primaryKey.name.value,
@@ -69,7 +84,12 @@ function formatQuery () {
         })
       }
       if (statement.type === 'foreignKey') {
-        elems = formatAst(statement.foreignKey.elems)
+        const elems = formatAst(statement.foreignKey.elems)
+        finalQuery.constraints.foreignKey = {}
+        finalQuery.constraints.foreignKey.name = statement.foreignKey.referenceTable.value
+        finalQuery.constraints.foreignKey.elements = elems
+        finalQuery.constraints.foreignKey.referenceTable = statement.foreignKey.referenceTable.value
+        finalQuery.constraints.foreignKey.referenceColumns = formatAst(statement.foreignKey.referenceColumn)
         constraints.push({
           type: 'FK',
           name: statement.foreignKey.name.value,
@@ -79,6 +99,10 @@ function formatQuery () {
         })
       }
       if (statement.type === 'check') {
+        finalQuery.constraints.check = {
+          name: statement.check.name.value,
+          expression: statement.check.checkExp
+        }
         constraints.push({
           type: 'CHECK',
           name: statement.check.name.value,
@@ -87,8 +111,8 @@ function formatQuery () {
       }
     }
   }
-  finalQuery.columns = columns
-  finalQuery.constraints = constraints
+  // finalQuery.columns = columns
+  // finalQuery.constraints = constraints
   return finalQuery
 }
 

@@ -119,13 +119,60 @@ var grammar = {
     {"name": "action", "symbols": [{"literal":"ADD"}, "constraintDeclaration"]},
     {"name": "action", "symbols": [{"literal":"DROP"}, {"literal":"COLUMN"}, (lexer.has("id") ? {type: "id"} : id)]},
     {"name": "action", "symbols": [{"literal":"DROP"}, {"literal":"CONSTRAINT"}, (lexer.has("id") ? {type: "id"} : id)]},
-    {"name": "expression", "symbols": [{"literal":"("}, "expression", {"literal":")"}]},
-    {"name": "expression", "symbols": [(lexer.has("num") ? {type: "num"} : num)]},
-    {"name": "expression", "symbols": [(lexer.has("id") ? {type: "id"} : id)]},
-    {"name": "expression", "symbols": [{"literal":"NOT"}, "expression"]},
-    {"name": "expression", "symbols": ["expression", "relOp", "expression"]},
-    {"name": "expression", "symbols": ["expression", {"literal":"AND"}, "expression"]},
-    {"name": "expression", "symbols": ["expression", {"literal":"OR"}, "expression"]},
+    {"name": "expression", "symbols": [{"literal":"NOT"}, "expression"], "postprocess": 
+        function (data) {
+        	return {
+        		operador: data[0],
+        		operando1: data[1]
+        	}
+        }
+        	},
+    {"name": "expression", "symbols": ["expression", "relOp", "term"], "postprocess": 
+        function (data) {
+        	return {
+        		operando1: data[0],
+        		operando2: data[2],
+        		operador: data[1]
+        	}
+        }
+        	},
+    {"name": "expression", "symbols": ["expression", {"literal":"OR"}, "term"], "postprocess": 
+        function (data) {
+        	return {
+        		operando1: data[0],
+        		operando2: data[2],
+        		operador: data[1]
+        	}
+        }
+        	},
+    {"name": "expression", "symbols": ["term"]},
+    {"name": "term", "symbols": ["factor"]},
+    {"name": "term", "symbols": ["term", {"literal":"AND"}, "factor"], "postprocess": 
+        function (data) {
+        	return {
+        		operando1: data[0],
+        		operando2: data[2],
+        		operador: data[1]
+        	}
+        }
+        						},
+    {"name": "factor", "symbols": [(lexer.has("num") ? {type: "num"} : num)], "postprocess": 
+        function (data) {
+        	return data[0]
+        }
+        							},
+    {"name": "factor", "symbols": [{"literal":"("}, "expression", {"literal":")"}], "postprocess": 
+        function (data) {
+        	return data[1]
+        }
+        						},
+    {"name": "factor", "symbols": [(lexer.has("id") ? {type: "id"} : id)], "postprocess": 
+        function (data) {
+        	return data[0]
+        }
+        						},
+    {"name": "factor", "symbols": [{"literal":"true"}]},
+    {"name": "factor", "symbols": [{"literal":"false"}]},
     {"name": "relOp", "symbols": [{"literal":"<="}]},
     {"name": "relOp", "symbols": [{"literal":">="}]},
     {"name": "relOp", "symbols": [{"literal":"<"}]},

@@ -112,13 +112,68 @@ action ->
 	|	"DROP" "CONSTRAINT" %id
 
 expression ->
-		"(" expression ")"
-	|	%num
-	|	%id
-	|	"NOT" expression
-	|	expression relOp expression
-	|	expression "AND" expression
-	|	expression "OR" expression
+	"NOT" expression
+	{%
+		function (data) {
+			return {
+				operador: data[0],
+				operando1: data[1]
+			}
+		}
+	%}
+	|	expression relOp term
+	{%
+		function (data) {
+			return {
+				operando1: data[0],
+				operando2: data[2],
+				operador: data[1]
+			}
+		}
+	%}
+	|	expression "OR" term
+	{%
+		function (data) {
+			return {
+				operando1: data[0],
+				operando2: data[2],
+				operador: data[1]
+			}
+		}
+	%}
+	| term
+
+	term 			-> factor
+						| term "AND" factor
+						{%
+							function (data) {
+								return {
+									operando1: data[0],
+									operando2: data[2],
+									operador: data[1]
+								}
+							}
+						%}
+	factor 		-> %num
+							{%
+								function (data) {
+									return data[0]
+								}
+							%}
+						| "(" expression ")"
+						{%
+							function (data) {
+								return data[1]
+							}
+						%}
+						| %id
+						{%
+							function (data) {
+								return data[0]
+							}
+						%}
+						| "true"
+						| "false"
 
 
 relOp 	->	"<="
