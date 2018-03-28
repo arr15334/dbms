@@ -4,9 +4,10 @@
 const moo = require('moo');
 
 let lexer = moo.compile({
-	keyword:	['KEY', 'PRIMARY', 'FOREIGN', 'CHECK',  'CONSTRAINT', 'NOT', 'AND', 'OR', 'PK_', 'REFERENCES', 'CH_'],
+	keyword:	['NOT', 'AND', 'TO', 'OR'],
+	constraintKeyword: ['KEY', 'PRIMARY', 'FOREIGN', 'CHECK', 'CONSTRAINT', 'PK_', 'REFERENCES', 'CH_', 'FK_'],
 	varType: ['INT', 'FLOAT', 'DATE', 'CHAR'],
-	command: ['CREATE', 'ALTER', 'RENAME', 'TO', 'DROP', 'SHOW', 'USE', 'FROM'],
+	command: ['CREATE', 'ALTER', 'RENAME',  'DROP', 'SHOW', 'USE', 'FROM', 'ADD'],
 	object: ['DATABASE', 'DATABASES', 'TABLE', 'TABLES', 'COLUMNS', 'COLUMN'],
 	ws: 		{match: /\s+/, lineBreaks: true},
 	id:			/[a-zA-Z][a-zA-Z0-9]*/,
@@ -30,6 +31,7 @@ lexer.next = (next => () => {
     return tok;
 })(lexer.next);
 
+let columns = []
 %}
 
 @lexer lexer
@@ -51,20 +53,60 @@ query ->
 	|	"SHOW" "COLUMNS" "FROM" %id
 
 columnDeclaration -> %id dataType
+{%
+	function(data) {
+		const column = {name: data[0], type: data[1]}
+		return { type: 'column', column: column }
+	}
+%}
 
 dataType ->
 		"INT"
 	|	"FLOAT"
 	|	"DATE"
 	|	"CHAR" "(" %num ")"
+	{%
+		function (data) {
+			return 'CHAR'+'('+data[2]+')'
+		}
+	%}
 
 constraintDeclaration ->
 		"PK_" %id "PRIMARY" "KEY" "("  %id ("," %id):* ")"
+		{%
+			function(data) {
+				const primaryKey = {
+					name: data[1],
+					elems: data.slice(5, data.length-1)
+				}
+				return { type: 'primaryKey', primaryKey: primaryKey }
+			}
+		%}
 	|	"FK_" %id "FOREIGN" "KEY" "("  %id ("," %id):* ")" "REFERENCES" %id "("  %id ("," %id):* ")"
+	{%
+		function(data) {
+			const foreignKey = {
+				name: data[1],
+				elems: data.slice(5, data.length-1),
+				referenceTable: data[9],
+				referenceColumn: data.slice(11, data.length-1)
+			}
+			return { type: 'foreignKey', foreignKey: foreignKey }
+		}
+	%}
 	|	"CH_" %id "CHECK" "(" expression ")"
+	{%
+		function(data) {
+			const check = {
+				name: data[1],
+				checkExp: data[4]
+			}
+			return { type: 'check', check: check }
+		}
+	%}
 
 action ->
-		"ADD" "COLUMN" %id dataType "CONSTRAINT" constraintDeclaration
+		"ADD" "COLUMN" columnDeclaration ("CONSTRAINT" constraintDeclaration):?
 	|	"ADD" constraintDeclaration
 	|	"DROP" "COLUMN" %id
 	|	"DROP" "CONSTRAINT" %id
