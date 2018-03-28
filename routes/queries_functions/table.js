@@ -189,7 +189,7 @@ table_queries.addConstraint = function(db, table, constraint) {
             } else {
                 //Se verifica que no exista otra constraint con ese nombre
                 if (verifyNameConstraint(dataConstraints, constraint.primaryKey.name)) {
-                    error = "Ya existe una constraint con el nombre '" + constraint.primaryKey.name + "' en la tabla '" + table "'.";
+                    error = "Ya existe una constraint con el nombre '" + constraint.primaryKey.name + "' en la tabla '" + table + "'.";
 
                     return error
                 }
@@ -212,7 +212,7 @@ table_queries.addConstraint = function(db, table, constraint) {
             } else {
                 //Se verifica que no exista otra constraint con ese nombre
                 if (verifyNameConstraint(dataConstraints, constraint.check.name)) {
-                    error = "Ya existe una constraint con el nombre '" + constraint.check.name + "' en la tabla '" + table "'.";
+                    error = "Ya existe una constraint con el nombre '" + constraint.check.name + "' en la tabla '" + table +"'.";
 
                     return error
                 }
@@ -251,7 +251,7 @@ table_queries.addConstraint = function(db, table, constraint) {
 
             //Se verifica que no exista otra constraint con ese nombre
             if (verifyNameConstraint(dataConstraints, name)) {
-                error = "Ya existe una constraint con el nombre '" + name + "' en la tabla '" + table "'.";
+                error = "Ya existe una constraint con el nombre '" + name + "' en la tabla '" + table +"'.";
 
                 return error
             }
