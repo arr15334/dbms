@@ -8,8 +8,29 @@ const register_queries = require('./queries_functions/register');
 
 var db = '';
 
+
+// table_queries.createTable("qwer", "asdf", {}, {});
+// console.log(table_queries.addConstraint("qwer", "asdf", {
+//     "primaryKey": {
+//         "name": "hola",
+//         "elements": []
+//     }
+// }));
+
+// console.log(table_queries.addConstraint("qwer", "asdf", {
+//     "foreignKey": {
+//         "hola": {
+//             "elements": [],
+//             "referenceTable": "fbg",
+//             "referenceColumn": "ertb"
+//         }
+//     }
+// }));
+
+// console.log(table_queries.deleteConstraint("qwer", "asdf", "hola"));
+
 router.get('/queries', function (req, res) {
-    
+
 });
 
 // router.post('/', function (req, res) {
