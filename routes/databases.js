@@ -6,11 +6,32 @@ const db_queries = require('./queries_functions/database');
 const table_queries = require('./queries_functions/table');
 const register_queries = require('./queries_functions/register');
 
-var db = '';
+const nearley = require('nearley')
+const grammar = require('../grammar/sql92.js')
+const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
 
-router.get('/queries', function (req, res) {
-    
+var db = '';
+var sqlQuery = {data: []}
+
+router.post('/queries', function (req, res) {
+  parser.feed(req.body['sql_query'])
+  // limpiar query anterior
+  sqlQuery = {data: []}
+  parseResult(parser.results[0][0][0][0])
+  res.json(sqlQuery)
 });
+
+// funcion para ordenar el query
+function parseResult (res) {
+  for (let i = 0; i<res.length; i++) {
+    if (!(res[i] instanceof Array)) {
+      sqlQuery.data.push(res[i])
+    } else {
+      // llamada recursiva
+      parseResult(res[i])
+    }
+  }
+}
 
 // router.post('/', function (req, res) {
 //     const dbName = req.body.name
