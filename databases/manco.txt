@@ -9,6 +9,7 @@
 }
 
 'manco': {
+    "registers": 411,
     "columns": {
         "name": {
             "type": "int"
@@ -18,17 +19,22 @@
 
     }
 
-    // Constraints pendientes
   constraints: {
       primaryKey: {
         name:
         elements: []
       },
       foreignKey: {
-        name:
-        elements: []
-        referenceTable:
-        referenceColumn:
+        "name": {
+            elements: []
+            referenceTable:
+            referenceColumn:
+        },
+        "name2": {
+            elements: []
+            referenceTable:
+            referenceColumn:
+        }
       },
       check: {
         name:  ,

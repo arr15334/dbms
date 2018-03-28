@@ -8,7 +8,7 @@ const path = './databases/';
 
 db_queries.createDatabase = function(name) {
     //Se lee la informacion en el archivo maestro de las bases de datos
-    let data = JSON.parse(fs.readFileSync(path+'__master.json', 'utf8'));
+    let data = JSON.parse(fs.readFileSync(path + '__master.json', 'utf8'));
 
     //Se verifica que no exista la base de datos
     if (!data.hasOwnProperty(name)) {
@@ -35,7 +35,7 @@ db_queries.createDatabase = function(name) {
 
 db_queries.renameDatabase = function(name, newName) {
     //Se lee la informacion en el archivo maestro de las bases de datos
-    let data = JSON.parse(fs.readFileSync(path+'__master.json', 'utf8'));
+    let data = JSON.parse(fs.readFileSync(path + '__master.json', 'utf8'));
 
     //Se verifica que: los nombres sean diferentes, exista la Base de Datos que se está
     //intentando modificar y que no exista un Base de Datos con el nuevo nombre
@@ -76,7 +76,7 @@ db_queries.renameDatabase = function(name, newName) {
 
 db_queries.deleteDatabase = function(db) {
     //Se lee la informacion en el archivo maestro de las bases de datos
-    let data = JSON.parse(fs.readFileSync(path+'__master.json', 'utf8'));
+    let data = JSON.parse(fs.readFileSync(path + '__master.json', 'utf8'));
 
     //Se verifica que exista la Base de Datos
     if (data.hasOwnProperty(db)) {
@@ -87,7 +87,7 @@ db_queries.deleteDatabase = function(db) {
         //Se elimina el directorio de la base de datos
         rimraf.sync(path + db);
 
-        return true
+        return null
     } else {
         let error = "Error: La Base de Datos '" + db + "' no existe."
 
@@ -95,15 +95,16 @@ db_queries.deleteDatabase = function(db) {
     }
 }
 
+// ?????
 db_queries.useDatabase = function(datab) {
     //Se lee la informacion en el archivo maestro de las bases de datos
-    let data = JSON.parse(fs.readFileSync(path+'__master.json', 'utf8'));
+    let data = JSON.parse(fs.readFileSync(path + '__master.json', 'utf8'));
 
     //Se verifica que exista la Base de Datos
     if (data.hasOwnProperty(datab)) {
         db = datab;
 
-        return true
+        return null
     } else {
         let error = "Error: No existe la Base de Datos '" + datab + "'.";
 
@@ -113,10 +114,19 @@ db_queries.useDatabase = function(datab) {
 
 db_queries.showDatabases = function() {
     //Se lee la informacion en el archivo maestro de las bases de datos
-    let data = JSON.parse(fs.readFileSync(path+'__master.json', 'utf8'));
+    let data = JSON.parse(fs.readFileSync(path + '__master.json', 'utf8'));
 
     //Se recuperan todos los nombres del archivo maestro
     let res = Object.keys(data);
+
+    return res
+}
+
+db_queries.getNumberOfRegisters = function(db) {
+    //Se lee la informacion en el archivo maestro de las bases de datos
+    let data = JSON.parse(fs.readFileSync(path + db + '__master.json', 'utf8'));
+
+    let res = data["registers"];
 
     return res
 }
