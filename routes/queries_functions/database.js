@@ -9,20 +9,27 @@ const path = './databases/';
 db_queries.createDatabase = function(name) {
     //Se lee la informacion en el archivo maestro de las bases de datos
     let data = JSON.parse(fs.readFileSync(path + '__master.json', 'utf8'));
-
+    console.log(data);
     //Se verifica que no exista la base de datos
     if (!data.hasOwnProperty(name)) {
         //Se crea la base de datos
+
         data[name] = {};
-        fs.writeFileSync(path + '__master.json', JSON.stringify(data), 'utf8');
-
-        //Se crea el directorio para la base de datos
-        fs.mkdirSync(path+name);
-
-        //Se crea el archivo maestro para la base de datos en su directorio
-        fs.writeFileSync('./databases/'+name+'/__master.json', JSON.stringify({}));
-
-        return null
+        return Promise.resolve()
+          .then(() => {
+            fs.writeFileSync(path + '__master.json', JSON.stringify(data), 'utf8');
+          })
+          .then(() => {
+            //Se crea el directorio para la base de datos
+            fs.mkdirSync(path+name);
+          })
+          .then(() => {
+            //Se crea el archivo maestro para la base de datos en su directorio
+            fs.writeFileSync('./databases/'+name+'/__master.json', JSON.stringify({}));
+          })
+          .then(() => {
+            return null
+          })
     } else {
         //Se muestra un error en caso que ya exista al base de datos
         let error = "Error: Ya existe una base de datos con el nombre '" + name + "'.";
@@ -99,12 +106,18 @@ db_queries.deleteDatabase = function(db) {
 db_queries.useDatabase = function(datab) {
     //Se lee la informacion en el archivo maestro de las bases de datos
     let data = JSON.parse(fs.readFileSync(path + '__master.json', 'utf8'));
-
+    let current_db = JSON.parse(fs.readFileSync(path + 'currentdb.json', 'utf8'));
     //Se verifica que exista la Base de Datos
     if (data.hasOwnProperty(datab)) {
-        db = datab;
-
-        return null
+        // db = datab;
+        const changeCurrent = {
+          'current': datab
+        }
+        fs.writeFileSync(path + 'currentdb.json', JSON.stringify(changeCurrent), 'utf8');
+        return {
+          'success': true,
+          'messsage': 'Using db: '+datab
+        }
     } else {
         let error = "Error: No existe la Base de Datos '" + datab + "'.";
 

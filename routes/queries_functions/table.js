@@ -82,14 +82,18 @@ table_queries.deleteTable = function(db, table) {
     //Se verifica que exista la tabla
     if (data.hasOwnProperty(table)) {
         //Se verifica que no exista ninguna referencia a la tabla
-        for (var key in data)
-            if (data.hasOwnProperty(key)) {
-                if (data[key].constraint.foreignKey.referenceTable == table) {
-                    error = "La tabla '" + key + "' tiene una referencia a la tabla '" + table +
-                        "'. Se debe eliminar la referencia primero antes de borrar la tabla."
-                    return error
-                }
+        for (var key in data) {
+          if (data.hasOwnProperty(key)) {
+            if (data[key].constraint) {
+              if (data[key].constraint.foreignKey.referenceTable == table) {
+                  error = "La tabla '" + key + "' tiene una referencia a la tabla '" + table +
+                      "'. Se debe eliminar la referencia primero antes de borrar la tabla."
+                  return error
+              }
             }
+          }
+        }
+
 
         //Se elimina la tabla del archivo maestro de la Base de Datos
         delete data[table];
