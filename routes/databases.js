@@ -20,6 +20,7 @@ router.post('/queries', function (req, res) {
   parseResult(parser.results[0][0][0])
   console.log(sqlQuery);
   const sqlObj = formatQuery()
+  console.log(routeQueries(sqlObj,db));
   res.json(sqlObj)
 });
 
@@ -130,6 +131,47 @@ function formatAst (l) {
   }
   return list
 }
+
+/**
+ * Function for sorting the query with the necesary route
+ * @param {Object} query - Object describing the information of the query
+ * @param {string} [db_queries=''] - String of the name of the database
+ * @return {string} message - String that contains the message if the query was successful
+ */
+function routeQueries(query, db = '') {
+  //Constant sort has the routes for every combination of action and object.
+  const sort = {
+    'CREATE': {
+      'TABLE': table_queries.createTable(db, query.id.name, query.columns, query.constraints),
+      'DATABASE': db_queries.createDatabase(query.id.name),
+    },
+    'RENAME': {
+      'TABLE': table_queries.renameTable(db, query.id.name, query.id.newName),
+      'DATABASE': db_queries.renameDatabase(query.id.name, query.id.newName),
+    },
+    'DROP': {
+      'COLUMN': table_queries.deleteColumn(db,query.id.name, query.columns[Object.keys(query.columns)[0]].name),
+      'CONSTRAINT': table_queries.deleteCosntraint(db. query.id.name, query.constraints[Object.keys(query.constraints)[0]].name),
+      'TABLES': table_queries.deleteTable(ds, query.id.name),
+      'DATABASE': db_queries.deleteDatabase(query.id.name),
+    },
+    'SHOW': {
+      'COLUMNS': table_queries.showColumns(db, query.id.name),
+      'TABLES': table_queries.showTables(db),
+      'DATABASES': db_queries.showDatabases(),
+    },
+    USE: {'DATABASE': db_queries.useDatabase(query.id.name),},
+    'ADD': {
+      'COLUMN': table_queries.addColumn(db,query.id.name, query.columns[Object.keys(query.columns)[0]].name, query.columns[Object.keys(query.columns)[0]].type, query.constraints[Object.keys(query.constraints)[0]]),
+      'CONSTRAINT': table_queries.addConstraint(db. query.id.name, query.constraints[Object.keys(query.constraints)[0]]),
+    },
+  }
+
+  //The fucntion is called by a element of sort, and returns a message 
+  return sort[query.action][query.object];
+}
+
+
 // router.post('/', function (req, res) {
 //     const dbName = req.body.name
 //     createDatabase(dbName)
