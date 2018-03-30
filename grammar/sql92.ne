@@ -4,7 +4,7 @@
 const moo = require('moo');
 
 let lexer = moo.compile({
-	command: 	['CREATE', 'ALTER', 'RENAME',  'DROP', 'SHOW', 'USE', 'FROM', 'ADD', 'INSERT', 'INTO'],
+	command: 	['CREATE', 'ALTER', 'RENAME',  'DROP', 'SHOW', 'USE', 'FROM', 'ADD', 'INSERT', 'INTO', 'SELECT', 'FROM', 'WHERE', 'UPDATE', 'DELETE', 'SET', 'VALUES'],
 	object: 	['DATABASE', 'DATABASES', 'TABLE', 'TABLES', 'COLUMNS', 'COLUMN'],
 	constraintKeyword: ['KEY', 'PRIMARY', 'FOREIGN', 'CHECK', 'CONSTRAINT', 'PK_', 'REFERENCES', 'CH_', 'FK_'],
 	varType: 	['INT', 'FLOAT', 'DATE', 'CHAR'],
@@ -56,35 +56,27 @@ query ->
 	|	"DROP" "TABLE" %id
 	|	"SHOW" "TABLES"
 	|	"SHOW" "COLUMNS" "FROM" %id 
-	|	"INSERT" "INTO" %id "(" %id ("," %id):* ")" "VALUES" "("value ("," value):* ")"
-	|	"UPDATE" %id "SET" %id "=" value ("," %id "=" value):* ("WHERE" condition):?
-	|	"DELETE" "FROM" %id ("WHERE" condition):?
+	|	"INSERT" "INTO" %id "(" %id ("," %id):* ")" "VALUES" "(" value ("," value):* ")"
+	|	"UPDATE" %id "SET" %id "=" value ("," %id "=" value):* ("WHERE" expression):?
+	|	"DELETE" "FROM" %id ("WHERE" expression):?
 	|	selectQuery
 
+#Query delaration, using ORDER BY and ASC|DESC operands
 selectQuery ->
-		"SELECT" ("*"| id ("," id):*) "FROM" id ("," id):* ("WHERE" condicion):? ("ORDER" "BY" expression ("ASC"|"DESC") ("," expression ("ASC"|"DESC")):* )
+		"SELECT" ("*"| %id ("," %id):*) "FROM" %id ("," %id):* ("WHERE" expression):? ("ORDER" "BY" expression ("ASC"|"DESC") ("," expression ("ASC"|"DESC")):* )
 
 #Starts condition declaration, with operator precedence. 
 condition -> 
-		condition "OR" notCondition
+		expression
 	|	expression ("NOT"):? "BETWEEN" expression "AND" expression
-	|	expresssion ("NOT"):? "IN" "("selectQuery")"
+	|	expression ("NOT"):? "IN"  "(" selectQuery ")"
 	|	expression ("NOT"):? "LIKE" pattern
-	|	"EXISTS" "("selectQuery")"
-	|	expression relOP "ALL" "("selectQuery")"
-	|	expression relOP ("ANY"|"SOME") "("selectQuery")" 
+	|	"EXISTS" "(" selectQuery ")"
+	|	expression relOp "ALL" "(" selectQuery ")"
+	|	expression relOp ("ANY"|"SOME") "(" selectQuery ")" 
 
-andCondition -> 
-		"AND" andCondition 
-	|	notCondition
 
-notCondition -> 
-		notCondition "NOT" relCondition
-	|	relCondition
-
-#Lowest condition precedence, uses expression
-relCondition -> expression relOp expression
-
+pattern -> "%" %id "%"
 
 
 
