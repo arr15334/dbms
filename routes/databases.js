@@ -135,7 +135,7 @@ function formatAst (l) {
 /**
  * Function for sorting the query with the necesary route
  * @param {Object} query - Object describing the information of the query
- * @param {string} [db_queries=''] - String of the name of the database
+ * @param {string} [db=''] - String of the name of the database
  * @return {string} message - String that contains the message if the query was successful
  */
 function routeQueries(query, db = '') {
@@ -167,7 +167,7 @@ function routeQueries(query, db = '') {
     },
   }
 
-  //The fucntion is called by a element of sort, and returns a message 
+  //The function is called by a element of sort, and returns a message 
   return sort[query.action][query.object];
 }
 
