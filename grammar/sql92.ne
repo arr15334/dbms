@@ -4,14 +4,17 @@
 const moo = require('moo');
 
 let lexer = moo.compile({
-	keyword:	['NOT', 'AND', 'TO', 'OR'],
+	command: 	['CREATE', 'ALTER', 'RENAME',  'DROP', 'SHOW', 'USE', 'FROM', 'ADD', 'INSERT', 'INTO'],
+	object: 	['DATABASE', 'DATABASES', 'TABLE', 'TABLES', 'COLUMNS', 'COLUMN'],
 	constraintKeyword: ['KEY', 'PRIMARY', 'FOREIGN', 'CHECK', 'CONSTRAINT', 'PK_', 'REFERENCES', 'CH_', 'FK_'],
-	varType: ['INT', 'FLOAT', 'DATE', 'CHAR'],
-	command: ['CREATE', 'ALTER', 'RENAME',  'DROP', 'SHOW', 'USE', 'FROM', 'ADD'],
-	object: ['DATABASE', 'DATABASES', 'TABLE', 'TABLES', 'COLUMNS', 'COLUMN'],
+	varType: 	['INT', 'FLOAT', 'DATE', 'CHAR'],
+	keyword:	['NOT', 'AND', 'TO', 'OR', 'LIKE', 'SOME', 'ANY', 'IN', 'BETWEEN', 'ALL', 'EXISTS', 'ORDER', 'BY'],
 	ws: 		{match: /\s+/, lineBreaks: true},
 	id:			/[a-zA-Z][a-zA-Z0-9]*/,
-	num:		/[0-9][0-9]*/,
+	float:		/-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)\b/,
+	int:		/-?(?:[0-9]|[1-9][0-9]+)\b/,
+	date:		/\'[0-9]{4}\-[0-9]{2}\-[0-9]{2}\'/,
+	char:		/\'[a-zA-Z]+\'/,
 	';': ';',
 	'(': '(',
 	')': ')',
@@ -39,6 +42,8 @@ let columns = []
 
 program ->  (query ";"):*
 
+
+
 query ->
 		"CREATE" "DATABASE" %id
 	|	"ALTER" "DATABASE" %id "RENAME" "TO" %id
@@ -50,7 +55,38 @@ query ->
 	|	"ALTER" "TABLE" %id (action)
 	|	"DROP" "TABLE" %id
 	|	"SHOW" "TABLES"
-	|	"SHOW" "COLUMNS" "FROM" %id
+	|	"SHOW" "COLUMNS" "FROM" %id 
+	|	"INSERT" "INTO" %id "(" %id ("," %id):* ")" "VALUES" "("value ("," value):* ")"
+	|	"UPDATE" %id "SET" %id "=" value ("," %id "=" value):* ("WHERE" condition):?
+	|	"DELETE" "FROM" %id ("WHERE" condition):?
+	|	selectQuery
+
+selectQuery ->
+		"SELECT" ("*"| id ("," id):*) "FROM" id ("," id):* ("WHERE" condicion):? ("ORDER" "BY" expression ("ASC"|"DESC") ("," expression ("ASC"|"DESC")):* )
+
+#Starts condition declaration, with operator precedence. 
+condition -> 
+		condition "OR" notCondition
+	|	expression ("NOT"):? "BETWEEN" expression "AND" expression
+	|	expresssion ("NOT"):? "IN" "("selectQuery")"
+	|	expression ("NOT"):? "LIKE" pattern
+	|	"EXISTS" "("selectQuery")"
+	|	expression relOP "ALL" "("selectQuery")"
+	|	expression relOP ("ANY"|"SOME") "("selectQuery")" 
+
+andCondition -> 
+		"AND" andCondition 
+	|	notCondition
+
+notCondition -> 
+		notCondition "NOT" relCondition
+	|	relCondition
+
+#Lowest condition precedence, uses expression
+relCondition -> expression relOp expression
+
+
+
 
 columnDeclaration -> %id dataType
 {%
@@ -60,16 +96,20 @@ columnDeclaration -> %id dataType
 	}
 %}
 
+
+
 dataType ->
 		"INT"
 	|	"FLOAT"
 	|	"DATE"
-	|	"CHAR" "(" %num ")"
+	|	"CHAR" "(" %int ")"
 	{%
 		function (data) {
 			return 'CHAR'+'('+data[2]+')'
 		}
 	%}
+
+
 
 constraintDeclaration ->
 		"PK_" %id "PRIMARY" "KEY" "("  %id ("," %id):* ")"
@@ -105,11 +145,15 @@ constraintDeclaration ->
 		}
 	%}
 
+
+
 action ->
 		"ADD" "COLUMN" columnDeclaration ("CONSTRAINT" constraintDeclaration):?
 	|	"ADD" constraintDeclaration
 	|	"DROP" "COLUMN" %id
 	|	"DROP" "CONSTRAINT" %id
+
+
 
 expression ->
 	"NOT" expression
@@ -154,7 +198,7 @@ expression ->
 								}
 							}
 						%}
-	factor 		-> %num
+	factor 		-> %int
 							{%
 								function (data) {
 									return data[0]
@@ -182,3 +226,10 @@ relOp 	->	"<="
 	|	">"
 	|	"<>"
 	|	"="
+
+
+value ->
+		%int
+	|	%float
+	|	%date
+	|	%char

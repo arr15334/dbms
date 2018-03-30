@@ -7,14 +7,17 @@ function id(x) { return x[0]; }
 const moo = require('moo');
 
 let lexer = moo.compile({
-	keyword:	['NOT', 'AND', 'TO', 'OR'],
+	command: ['CREATE', 'ALTER', 'RENAME',  'DROP', 'SHOW', 'USE', 'FROM', 'ADD', 'INSERT', 'INTO'],
+	object: ['DATABASE', 'DATABASES', 'TABLE', 'TABLES', 'COLUMNS', 'COLUMN'],
 	constraintKeyword: ['KEY', 'PRIMARY', 'FOREIGN', 'CHECK', 'CONSTRAINT', 'PK_', 'REFERENCES', 'CH_', 'FK_'],
 	varType: ['INT', 'FLOAT', 'DATE', 'CHAR'],
-	command: ['CREATE', 'ALTER', 'RENAME',  'DROP', 'SHOW', 'USE', 'FROM', 'ADD'],
-	object: ['DATABASE', 'DATABASES', 'TABLE', 'TABLES', 'COLUMNS', 'COLUMN'],
+	keyword:	['NOT', 'AND', 'TO', 'OR'],
 	ws: 		{match: /\s+/, lineBreaks: true},
 	id:			/[a-zA-Z][a-zA-Z0-9]*/,
-	num:		/[0-9][0-9]*/,
+	float:		/-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)\b/,
+	int:		/-?(?:[0-9]|[1-9][0-9]+)\b/,
+	date:		/\'[0-9]{4}\-[0-9]{2}\-[0-9]{2}\'/,
+	char:		/[a-zA-Z]+/,
 	';': ';',
 	'(': '(',
 	')': ')',
@@ -60,6 +63,13 @@ var grammar = {
     {"name": "query", "symbols": [{"literal":"DROP"}, {"literal":"TABLE"}, (lexer.has("id") ? {type: "id"} : id)]},
     {"name": "query", "symbols": [{"literal":"SHOW"}, {"literal":"TABLES"}]},
     {"name": "query", "symbols": [{"literal":"SHOW"}, {"literal":"COLUMNS"}, {"literal":"FROM"}, (lexer.has("id") ? {type: "id"} : id)]},
+    {"name": "query$ebnf$3", "symbols": []},
+    {"name": "query$ebnf$3$subexpression$1", "symbols": [{"literal":","}, (lexer.has("id") ? {type: "id"} : id)]},
+    {"name": "query$ebnf$3", "symbols": ["query$ebnf$3", "query$ebnf$3$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "query$ebnf$4", "symbols": []},
+    {"name": "query$ebnf$4$subexpression$1", "symbols": [{"literal":","}, "value"]},
+    {"name": "query$ebnf$4", "symbols": ["query$ebnf$4", "query$ebnf$4$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "query", "symbols": [{"literal":"INSERT"}, {"literal":"INTO"}, (lexer.has("id") ? {type: "id"} : id), {"literal":"("}, (lexer.has("id") ? {type: "id"} : id), "query$ebnf$3", {"literal":")"}, {"literal":"VALUES"}, {"literal":"("}, "value", "query$ebnf$4", {"literal":")"}]},
     {"name": "columnDeclaration", "symbols": [(lexer.has("id") ? {type: "id"} : id), "dataType"], "postprocess": 
         function(data) {
         	const column = {name: data[0], type: data[1]}
@@ -69,7 +79,7 @@ var grammar = {
     {"name": "dataType", "symbols": [{"literal":"INT"}]},
     {"name": "dataType", "symbols": [{"literal":"FLOAT"}]},
     {"name": "dataType", "symbols": [{"literal":"DATE"}]},
-    {"name": "dataType", "symbols": [{"literal":"CHAR"}, {"literal":"("}, (lexer.has("num") ? {type: "num"} : num), {"literal":")"}], "postprocess": 
+    {"name": "dataType", "symbols": [{"literal":"CHAR"}, {"literal":"("}, (lexer.has("int") ? {type: "int"} : int), {"literal":")"}], "postprocess": 
         function (data) {
         	return 'CHAR'+'('+data[2]+')'
         }
@@ -156,7 +166,7 @@ var grammar = {
         	}
         }
         						},
-    {"name": "factor", "symbols": [(lexer.has("num") ? {type: "num"} : num)], "postprocess": 
+    {"name": "factor", "symbols": [(lexer.has("int") ? {type: "int"} : int)], "postprocess": 
         function (data) {
         	return data[0]
         }
@@ -178,7 +188,11 @@ var grammar = {
     {"name": "relOp", "symbols": [{"literal":"<"}]},
     {"name": "relOp", "symbols": [{"literal":">"}]},
     {"name": "relOp", "symbols": [{"literal":"<>"}]},
-    {"name": "relOp", "symbols": [{"literal":"="}]}
+    {"name": "relOp", "symbols": [{"literal":"="}]},
+    {"name": "value", "symbols": [(lexer.has("int") ? {type: "int"} : int)]},
+    {"name": "value", "symbols": [(lexer.has("float") ? {type: "float"} : float)]},
+    {"name": "value", "symbols": [(lexer.has("date") ? {type: "date"} : date)]},
+    {"name": "value", "symbols": [(lexer.has("char") ? {type: "char"} : char)]}
 ]
   , ParserStart: "program"
 }
