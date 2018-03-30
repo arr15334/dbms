@@ -25,7 +25,10 @@ table_queries.createTable = function(db, name, columns, constraints) {
         //Se crea el archivo de la tabla nueva
         fs.appendFileSync(path + db + '/' + name + ".json", JSON.stringify({}));
 
-        return null
+        return {
+          'success': true,
+          'message': 'Table '+name+ ' created in database '+db
+        }
 
     } else {
 
@@ -33,7 +36,10 @@ table_queries.createTable = function(db, name, columns, constraints) {
         let error = "Error: Ya existe una tabla con el nombre '" + name + "'.";
         console.log(error);
 
-        return error
+        return {
+          'success': false,
+          'message': error
+        }
 
     }
 }
@@ -57,21 +63,33 @@ table_queries.renameTable = function(db, name, newName) {
 
                 fs.renameSync(path + db + '/' + name + '.json', path + db + '/' + name + '.json');
 
-                return null
+                return {
+                  'success': true,
+                  'message': 'Table '+name+ ' renamed to ' + newName+ ' in database '+db
+                }
             } else {
                 let error = "Error: Ya existe una tabla con el nombre '" + newName + "' en la Base de Datos.";
 
-                return error
+                return {
+                  'success': false,
+                  'message': error
+                }
             }
         } else {
             let error = "Error: La tabla '" + name + "' no existe.";
 
-            return error
+            return {
+              'success': false,
+              'message': error
+            }
         }
     } else {
         let error = "Error: La tabla '" + name + "' se está tratando de cambiar al mismo nombre."
 
-        return error
+        return {
+          'success': false,
+          'message': error
+        }
     }
 }
 
@@ -82,14 +100,21 @@ table_queries.deleteTable = function(db, table) {
     //Se verifica que exista la tabla
     if (data.hasOwnProperty(table)) {
         //Se verifica que no exista ninguna referencia a la tabla
-        for (var key in data)
-            if (data.hasOwnProperty(key)) {
-                if (data[key].constraint.foreignKey.referenceTable == table) {
-                    error = "La tabla '" + key + "' tiene una referencia a la tabla '" + table +
-                        "'. Se debe eliminar la referencia primero antes de borrar la tabla."
-                    return error
-                }
+        for (var key in data) {
+          if (data.hasOwnProperty(key)) {
+            if (data[key].constraint) {
+              if (data[key].constraint.foreignKey.referenceTable == table) {
+                  error = "La tabla '" + key + "' tiene una referencia a la tabla '" + table +
+                      "'. Se debe eliminar la referencia primero antes de borrar la tabla."
+                  return {
+                    'success': false,
+                    'message': error
+                  }
+              }
             }
+          }
+        }
+
 
         //Se elimina la tabla del archivo maestro de la Base de Datos
         delete data[table];
@@ -98,12 +123,18 @@ table_queries.deleteTable = function(db, table) {
         //Se elimina el archivo de la tabla
         fs.unlinkSync(path + db + '/' + table + '.json');
 
-        return null
+        return {
+          'success': true,
+          'message': 'Table '+name+ ' deleted in database '+db
+        }
 
     } else {
         let error = "Error: La tabla '" + table + "' no existe.";
 
-        return error
+        return {
+          'success': false,
+          'message': error
+        }
     }
 }
 
@@ -114,7 +145,11 @@ table_queries.showTables = function(db) {
     //Se recuperan todas las tablas del archivo maestro de la Base de Datos
     let res = Object.keys(data);
 
-    return res
+    return {
+      'success': true,
+      'type': 'tables',
+      'message': res
+    }
 }
 
 table_queries.addColumn = function(db, table, name, type, constraint) {
@@ -132,16 +167,25 @@ table_queries.addColumn = function(db, table, name, type, constraint) {
             }
             fs.writeFileSync(path + db + '/__master.json', JSON.stringify(data), 'utf8');
 
-            return null
+            return {
+              'success': true,
+              'message': 'Column '+name+ ' added in table '+ table +' in database '+db
+            }
         } else {
             error = "Ya existe una columna con el nombre '" + name + "'.";
 
-            return error
+            return {
+              'success': false,
+              'message': error
+            }
         }
     } else {
         error = "No existe una tabla con el nombre '" + table + "'.";
 
-        return error
+        return {
+          'success': false,
+          'message': error
+        }
     }
 }
 
@@ -158,16 +202,25 @@ table_queries.deleteColumn = function(db, table, name) {
             delete data[table]["columns"][name];
             fs.writeFileSync(path + db + '/__master.json', JSON.stringify(data), 'utf8');
 
-            return null
+            return {
+              'success': true,
+              'message': 'Column '+name+ ' deleted from table '+ table +' in database '+db
+            }
         } else {
             error = "No existe una columna con el nombre '" + name + "'.";
 
-            return error
+            return {
+              'success': false,
+              'message': error
+            }
         }
     } else {
         error = "No existe una tabla con el nombre '" + table + "'.";
 
-        return error
+        return {
+          'success': false,
+          'message': error
+        }
     }
 }
 
@@ -185,20 +238,29 @@ table_queries.addConstraint = function(db, table, constraint) {
             if (dataConstraints.hasOwnProperty("primaryKey")) {
                 error = "Para definir una nueva Primary Key debe eliminar la anterior primero en la tabla '" + table + "'.";
 
-                return error;
+                return {
+                  'success': false,
+                  'message': error
+                }
             } else {
                 //Se verifica que no exista otra constraint con ese nombre
                 if (verifyNameConstraint(dataConstraints, constraint.primaryKey.name)) {
                     error = "Ya existe una constraint con el nombre '" + constraint.primaryKey.name + "' en la tabla '" + table + "'.";
 
-                    return error
+                    return {
+                      'success': false,
+                      'message': error
+                    }
                 }
 
                 //Se agrega la Primary Key al archivo maestro
                 data[table]["constraints"]["primaryKey"] = constraint.primaryKey;
                 fs.writeFileSync(path + db + '/__master.json', JSON.stringify(data), 'utf8');
 
-                return null
+                return {
+                  'success': true,
+                  'message': 'Constraint PK added in table '+ table + ' in database '+db
+                }
             }
         }
 
@@ -208,20 +270,29 @@ table_queries.addConstraint = function(db, table, constraint) {
             if (dataConstraints.hasOwnProperty("check")) {
                 error = "Para definir un nuevo Check debe eliminar el anterior primero en la tabla '" + table + "'.";
 
-                return error;
+                return {
+                  'success': false,
+                  'message': error
+                }
             } else {
                 //Se verifica que no exista otra constraint con ese nombre
                 if (verifyNameConstraint(dataConstraints, constraint.check.name)) {
                     error = "Ya existe una constraint con el nombre '" + constraint.check.name + "' en la tabla '" + table +"'.";
 
-                    return error
+                    return {
+                      'success': false,
+                      'message': error
+                    }
                 }
 
                 //Se agrega el Check al archivo maestro
                 data[table]["constraints"]["check"] = constraint.check;
                 fs.writeFileSync(path + db + '/__master.json', JSON.stringify(data), 'utf8');
 
-                return null
+                return {
+                  'success': true,
+                  'message': 'Constraint CH added in table '+ table + ' in database '+db
+                }
             }
         }
 
@@ -242,7 +313,10 @@ table_queries.addConstraint = function(db, table, constraint) {
                         if (tempFK == name) {
                             error = "Ya existe una Foreign Key con el nombre '" + tempFK + "' en la tabla '" + table + "'.";
 
-                            return error
+                            return {
+                              'success': false,
+                              'message': error
+                            }
                         }
                     }
             } else {
@@ -253,20 +327,29 @@ table_queries.addConstraint = function(db, table, constraint) {
             if (verifyNameConstraint(dataConstraints, name)) {
                 error = "Ya existe una constraint con el nombre '" + name + "' en la tabla '" + table +"'.";
 
-                return error
+                return {
+                  'success': false,
+                  'message': error
+                }
             }
 
             //Se agrega la Foreign Key al archivo maestro
             data[table]["constraints"]["foreignKey"][name] = constraint.foreignKey[name];
             fs.writeFileSync(path + db + '/__master.json', JSON.stringify(data), 'utf8');
 
-            return null
+            return {
+              'success': true,
+              'message': 'Constraint FK added in table '+ table + ' in database '+db
+            }
         }
 
     } else {
         error = "No existe una tabla con el nombre '" + table + "'.";
 
-        return error
+        return {
+          'success': false,
+          'message': error
+        }
     }
 }
 
@@ -284,7 +367,10 @@ table_queries.deleteConstraint = function(db, table, name) {
                 delete data[table]["constraints"]["primaryKey"];
                 fs.writeFileSync(path + db + '/__master.json', JSON.stringify(data), 'utf8');
 
-                return null
+                return {
+                  'success': true,
+                  'message': 'PK constraint deleted from table '+ table + ' in database '+db
+                }
             }
         }
 
@@ -296,7 +382,10 @@ table_queries.deleteConstraint = function(db, table, name) {
                         delete data[table]["constraints"]["foreignKey"][tempF];
                         fs.writeFileSync(path + db + '/__master.json', JSON.stringify(data), 'utf8');
 
-                        return null
+                        return {
+                          'success': true,
+                          'message': 'FK constraint deleted from table '+ table + ' in database '+db
+                        }
                     }
                 }
         }
@@ -307,19 +396,28 @@ table_queries.deleteConstraint = function(db, table, name) {
                 delete data[table]["constraints"]["check"];
                 fs.writeFileSync(path + db + '/__master.json', JSON.stringify(data), 'utf8');
 
-                return null
+                return {
+                  'success': true,
+                  'message': 'CH constraint deleted from table '+ table + ' in database '+db
+                }
             }
         }
 
         //Si no se encontró ninguna constraint con el nombre, se muestra un error
-        error = "No se encontró- una constraint con el nombre '" + name + "' en la tabla '" + table + "'."
+        error = "No se encontró una constraint con el nombre '" + name + "' en la tabla '" + table + "'."
 
-        return error
+        return {
+          'success': false,
+          'message': error
+        }
 
     } else {
         error = "No existe una tabla con el nombre '" + table + "'.";
 
-        return error
+        return {
+          'success': false,
+          'message': error
+        }
     }
 }
 
@@ -331,11 +429,18 @@ table_queries.showColumns = function(db, table) {
     if (data.hasOwnProperty(table)) {
         let columns = data[table]["columns"];
 
-        return columns
+        return {
+          'success': true,
+          'type': 'columns',
+          'columns': columns
+        }
     } else {
         error = "No existe una tabla con el nombre '" + table + "'.";
 
-        return error
+        return {
+          'success': false,
+          'message': error
+        }
     }
 }
 

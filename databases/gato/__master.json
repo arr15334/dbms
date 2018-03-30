@@ -1,0 +1,1 @@
+{"gatito":{"columns":{"age":{"type":"INT"},"name":{"type":"CHAR(4)"},"birth":{"type":"DATE"}},"constraints":{"primaryKey":{"name":"felino","elems":["name"]}}},"ojos":{"columns":{"color":{"type":"CHAR(1)"}},"constraints":{}}}

@@ -9,7 +9,8 @@ const register_queries = require('./queries_functions/register');
 const nearley = require('nearley')
 const grammar = require('../grammar/sql92.js')
 
-var db = '';
+const path = './databases/';
+
 var sqlQuery = {data: []}
 
 router.post('/queries', function (req, res) {
@@ -20,8 +21,16 @@ router.post('/queries', function (req, res) {
   parseResult(parser.results[0][0][0])
   console.log(sqlQuery);
   const sqlObj = formatQuery()
-  console.log(routeQueries(sqlObj,db));
-  res.json(sqlObj)
+  return Promise.resolve()
+    .then(() => {
+      return formatQuery()
+    })
+    .then((query) => {
+      return routeQueries(query)
+    })
+    .then((result) => {
+      res.json(result)
+    })
 });
 
 // funcion para ordenar el query
@@ -138,8 +147,47 @@ function formatAst (l) {
  * @param {string} [db=''] - String of the name of the database
  * @return {string} message - String that contains the message if the query was successful
  */
-function routeQueries(query, db = '') {
+function routeQueries(query) {
+  const action = query.action
+  const object = query.object
+  return getCurrentDatabase()
+    .then((db) => {
+      console.log(db);
+      if (action === 'CREATE') {
+        if (object === 'DATABASE') return db_queries.createDatabase(query.id.name)
+        else if (object === 'TABLE') return table_queries.createTable(db, query.id.name, query.columns, query.constraints)
+          else {
+          return 'Error: bad query'
+        }
+      } else if (action === 'DROP') {
+          if (object === 'DATABASE') return db_queries.deleteDatabase(query.id.name)
+          else if(object === 'TABLE') return table_queries.deleteTable(db, query.id.name)
+          else if(object === 'COLUMN') return table_queries.deleteColumn(db, query.id.name, query.columns.name)
+          else if(object === 'CONSTRAINT') return table_queries.deleteConstraint(db, query.id.name, query.constraints.name)
+          else return 'Error: bad query'
+      } else if (action === 'RENAME') {
+          if (object === 'TABLE') return table_queries.renameTable(db, query.id.name, query.id.newName)
+          else if (object === 'DATABASE') return db_queries.renameDatabase(query.id.name, query.id.newName)
+          else return 'Error: bad query'
+      } else if (action === 'SHOW') {
+          if (object === 'DATABASES') return db_queries.showDatabases()
+          else if (object === 'TABLES') return table_queries.showTables(db)
+          else if (object ==='COLUMNS') return table_queries.showColumns(db, query.id.name)
+      } else if (action === 'USE') {
+        if (object === 'DATABASE') {
+          return db_queries.useDatabase(query.id.name)
+        } else {
+          return 'Error: bad query'
+        }
+      } else if (action === 'ADD') {
+          if (object === 'COLUMN') return table_queries.addColumn(db ,query.id.name, query.columns.name, query.columns.name.type, query.constraints)
+          else if (object === 'CONSTRAINT') return table_queries.addConstraint(db, query.id.name, query.constraints[Object.keys(query.constraints)[0]])
+      } else {
+        return 'Error: bad query'
+      }
+    })
   //Constant sort has the routes for every combination of action and object.
+  /*
   const sort = {
     'CREATE': {
       'TABLE': table_queries.createTable(db, query.id.name, query.columns, query.constraints),
@@ -150,9 +198,10 @@ function routeQueries(query, db = '') {
       'DATABASE': db_queries.renameDatabase(query.id.name, query.id.newName),
     },
     'DROP': {
-      'COLUMN': table_queries.deleteColumn(db,query.id.name, query.columns[Object.keys(query.columns)[0]].name),
-      'CONSTRAINT': table_queries.deleteCosntraint(db. query.id.name, query.constraints[Object.keys(query.constraints)[0]].name),
-      'TABLES': table_queries.deleteTable(ds, query.id.name),
+      // table_queries.deleteColumn(db, query.id.name, query.columns.name)
+      'COLUMN': console.log('delete'),
+      'CONSTRAINT': table_queries.deleteConstraint(db, query.id.name, query.constraints.name),
+      'TABLES': table_queries.deleteTable(db, query.id.name),
       'DATABASE': db_queries.deleteDatabase(query.id.name),
     },
     'SHOW': {
@@ -160,73 +209,34 @@ function routeQueries(query, db = '') {
       'TABLES': table_queries.showTables(db),
       'DATABASES': db_queries.showDatabases(),
     },
-    USE: {'DATABASE': db_queries.useDatabase(query.id.name),},
+    // 'USE': {'DATABASE': db_queries.useDatabase(query.id.name)},
+    'USE': {'DATABASE': console.log('use db')},
     'ADD': {
-      'COLUMN': table_queries.addColumn(db,query.id.name, query.columns[Object.keys(query.columns)[0]].name, query.columns[Object.keys(query.columns)[0]].type, query.constraints[Object.keys(query.constraints)[0]]),
-      'CONSTRAINT': table_queries.addConstraint(db. query.id.name, query.constraints[Object.keys(query.constraints)[0]]),
+      'COLUMN': table_queries.addColumn(db,query.id.name, query.columns.name, query.columns.name ? query.columns.name.type : '', query.constraints),
+      'CONSTRAINT': table_queries.addConstraint(db, query.id.name, query.constraints[Object.keys(query.constraints)[0]]),
     },
   }
+<<<<<<< HEAD
 
   //The function is called by a element of sort, and returns a message 
   return sort[query.action][query.object];
+=======
+*/
+  //The function is called by an element of sort, and returns a message
+  // return sort[query.action][query.object];
+>>>>>>> 88c0db787b592e57d8552664d155901defd16a38
 }
 
+function getCurrentDatabase () {
+  return Promise.resolve()
+    .then(() => {
+      return JSON.parse(fs.readFileSync(path + 'currentdb.json', 'utf8'));
+    })
+    .then((data) => {
+      return data.current
+    })
+}
 
-// router.post('/', function (req, res) {
-//     const dbName = req.body.name
-//     createDatabase(dbName)
-//     res.send('created')
-// });
-//
-// router.post('/:db/tables', function (req, res) {
-//     // TODO añadir constraints
-//     const db = req.params.db || ''
-//     if (!db) res.send('no db specified')
-//
-//     const tableName = req.body['table_name'];
-//
-//     const columns = req.body['columns']
-//     createTable(db, tableName, columns);
-//     res.send('created table for '+db)
-// });
-//
-// router.put('/:db/rename', function (req, res) {
-//     const newName = req.body['new_name']
-//     const oldName = req.params.db
-//     renameDatabase(oldName, newName)
-//     res.send('changed name')
-// });
-//
-// router.delete('/:db/drop', function (req, res) {
-//     const db = req.params.db || ''
-//     deleteDatabase(db)
-//     res.send('deleted')
-// })
-//
-// router.get('/', function (req, res) {
-//     const dbs = getDatabases()
-//     res.json(dbs)
-// })
-//
-// router.get('/:db/tables', function (req, res) {
-//     const db = req.params.db
-//     res.json(getTables(db))
-// })
-//
-// router.put('/:db/tables/:tableName', (req, res) => {
-//     const db = req.params.db
-//     const oldName = req.params.tableName
-//     const newName = req.body['new_name']
-//     renameTable(db, oldName, newName)
-//     res.send('name changed to '+newName)
-// })
-//
-// router.delete('/:db/tables/:tableName', (req, res) => {
-//   const db = req.params.db
-//   const tableName = req.params.tableName
-//   deleteTable(db, tableName)
-//   res.send('deleted table ' + tableName)
-// })
 
 
 module.exports = router;
