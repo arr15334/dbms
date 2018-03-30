@@ -3,8 +3,6 @@ var table_queries = {};
 var fs = require('fs');
 
 const path = './databases/';
-//
-// table_queries.createTable("qwer", "asdf", {}, {});
 
 table_queries.createTable = function(db, name, columns, constraints) {
     //Se lee la informacion en el archivo maestro de la base de datos
@@ -16,14 +14,36 @@ table_queries.createTable = function(db, name, columns, constraints) {
 
         //Se agregan las propiedades de la tabla al objeto de esta
         obj["columns"] = columns;
+
+        var schema = {};
+        for (var key in columns)
+            if (columns.hasOwnProperty(key)) {
+                schema[key] = null;
+            }
+
+        obj["schema"] = schema;
+
         obj["constraints"] = constraints;
 
         //Se agrega la tabla y su metadata a la base de datos
         data[name] = obj;
         fs.writeFileSync(path + db + '/__master.json', JSON.stringify(data), 'utf8');
 
+        //Se crea el la información básica del archivo de la tabla
+        var tableObj = {
+            "registers": []
+        };
+
+        if (constraints.hasOwnProperty("primaryKey")) {
+            tableObj["primaryKey"] = {};
+
+            for (var i = 0; i < constraints.primaryKey.elements.length; i++) {
+                tableObj["primaryKey"][constraints.primaryKey.elements[i]] = {};
+            }
+        }
+
         //Se crea el archivo de la tabla nueva
-        fs.appendFileSync(path + db + '/' + name + ".json", JSON.stringify({}));
+        fs.writeFileSync(path + db + '/' + name + ".json", JSON.stringify(tableObj));
 
         return {
           'success': true,
@@ -161,10 +181,17 @@ table_queries.addColumn = function(db, table, name, type, constraint) {
         let columns = data["columns"]; //Variable temporal con las columnas
 
         if (!columns.hasOwnProperty(name)) {
+            let res = table_queries.addConstraint(db, table, constraint);
+            if (!res.success)
+                return res
+
             //Se agrega la columna al archivo maestro de la Base de Datos
             data["columns"][name] = {
                 "type": type
             }
+
+            data[table]["schema"][name] = null;
+
             fs.writeFileSync(path + db + '/__master.json', JSON.stringify(data), 'utf8');
 
             return {
@@ -199,6 +226,7 @@ table_queries.deleteColumn = function(db, table, name) {
 
         if (columns.hasOwnProperty(name)) {
             //Se agrega la columna al archivo maestro de la Base de Datos
+            delete data[table]["schema"][name];
             delete data[table]["columns"][name];
             fs.writeFileSync(path + db + '/__master.json', JSON.stringify(data), 'utf8');
 
@@ -366,6 +394,10 @@ table_queries.deleteConstraint = function(db, table, name) {
             if (constraints.primaryKey.name == name) {
                 delete data[table]["constraints"]["primaryKey"];
                 fs.writeFileSync(path + db + '/__master.json', JSON.stringify(data), 'utf8');
+
+                let tableData = JSON.parse(fs.readFileSync(path + db + '/' + table + '.json', 'utf8'));
+                delete tableData.primaryKey;
+                fs.writeFileSync(path + db + '/' + table + '.json', JSON.stringify(tableData), 'utf8');
 
                 return {
                   'success': true,
