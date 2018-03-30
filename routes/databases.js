@@ -152,7 +152,7 @@ function routeQueries(query) {
   const object = query.object
   return getCurrentDatabase()
     .then((db) => {
-      console.log(db);
+      console.log(query)
       if (action === 'CREATE') {
         if (object === 'DATABASE') return db_queries.createDatabase(query.id.name)
         else if (object === 'TABLE') return table_queries.createTable(db, query.id.name, query.columns, query.constraints)
@@ -180,7 +180,7 @@ function routeQueries(query) {
           return 'Error: bad query'
         }
       } else if (action === 'ADD') {
-          if (object === 'COLUMN') return table_queries.addColumn(db ,query.id.name, query.columns.name, query.columns.name.type, query.constraints)
+          if (object === 'COLUMN') return table_queries.addColumn(db ,query.id.name, Object.keys(query.columns)[0], query.columns[Object.keys(query.columns)[0]].type, query.constraints)
           else if (object === 'CONSTRAINT') return table_queries.addConstraint(db, query.id.name, query.constraints[Object.keys(query.constraints)[0]])
       } else {
         return 'Error: bad query'
@@ -218,13 +218,13 @@ function routeQueries(query) {
   }
 <<<<<<< HEAD
 
-  //The function is called by a element of sort, and returns a message 
+  //The function is called by a element of sort, and returns a message
   return sort[query.action][query.object];
 =======
 */
   //The function is called by an element of sort, and returns a message
   // return sort[query.action][query.object];
->>>>>>> 88c0db787b592e57d8552664d155901defd16a38
+
 }
 
 function getCurrentDatabase () {

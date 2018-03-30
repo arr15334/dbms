@@ -1,0 +1,1 @@
+{"cd":{"columns":{"nombre":{"type":"CHAR(4)"},"precio":{"type":"FLOAT"},"region":{"type":"INT"}},"schema":{"nombre":null,"precio":null,"region":null},"constraints":{}},"camisa":{"columns":{"marca":{"type":"CHAR(4)"},"precio":{"type":"FLOAT"},"color":{"type":"INT"}},"schema":{"marca":null,"precio":null,"color":null},"constraints":{}}}

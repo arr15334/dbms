@@ -65,6 +65,7 @@ table_queries.createTable = function(db, name, columns, constraints) {
 }
 
 table_queries.renameTable = function(db, name, newName) {
+  console.log('hola');
     //Se lee la informacion en el archivo maestro de la base de datos
     let data = JSON.parse(fs.readFileSync(path + db + '/__master.json', 'utf8'));
 
@@ -81,7 +82,7 @@ table_queries.renameTable = function(db, name, newName) {
                 //Se modifica el archivo con el nuevo nombre
                 fs.writeFileSync(path + db + '/__master.json', JSON.stringify(data), 'utf8');
 
-                fs.renameSync(path + db + '/' + name + '.json', path + db + '/' + name + '.json');
+                fs.renameSync(path + db + '/' + name + '.json', path + db + '/' + newName + '.json');
 
                 return {
                   'success': true,
@@ -178,15 +179,18 @@ table_queries.addColumn = function(db, table, name, type, constraint) {
 
     //Se verifica que exista la tablas
     if (data.hasOwnProperty(table)) {
-        let columns = data["columns"]; //Variable temporal con las columnas
+      console.log(data)
+        let columns = data[table]["columns"]; //Variable temporal con las columnas
 
         if (!columns.hasOwnProperty(name)) {
             let res = table_queries.addConstraint(db, table, constraint);
-            if (!res.success)
-                return res
+            if (res) {
+              if (!res.success)
+                  return res
+            }
 
             //Se agrega la columna al archivo maestro de la Base de Datos
-            data["columns"][name] = {
+            data[table]["columns"][name] = {
                 "type": type
             }
 
