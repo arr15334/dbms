@@ -63,7 +63,7 @@ query ->
 
 #Query delaration, using ORDER BY and ASC|DESC operands
 selectQuery ->
-		"SELECT" ("*"| %id ("," %id):*) "FROM" %id ("," %id):* ("WHERE" expression):? ("ORDER" "BY" expression ("ASC"|"DESC") ("," expression ("ASC"|"DESC")):* )
+		"SELECT" ("*"| %id ("," %id):*) "FROM" %id ("," %id):* ("WHERE" expression):? ("ORDER" "BY" expression ("ASC"|"DESC") ("," expression ("ASC"|"DESC")):* ):?
 
 #Starts condition declaration, with operator precedence. 
 condition -> 
@@ -148,7 +148,34 @@ action ->
 
 
 expression ->
-	"NOT" expression
+		expression "OR" andTerm
+	{%
+		function (data) {
+			return {
+				operando1: data[0],
+				operando2: data[2],
+				operador: data[1]
+			}
+		}
+	%}
+	| andTerm {% (data) => data[0] %}
+
+andTerm -> 
+	 	andTerm "AND" notTerm
+	{%
+		function (data) {
+			return {
+				operando1: data[0],
+				operando2: data[2],
+				operador: data[1]
+			}
+		}
+	%}
+	|	notTerm 	{% (data) => data[0] %}
+
+
+notTerm ->
+		"NOT" relTerm
 	{%
 		function (data) {
 			return {
@@ -157,7 +184,10 @@ expression ->
 			}
 		}
 	%}
-	|	expression relOp term
+	|	relTerm 	{% (data) => data[0] %}
+
+relTerm ->
+		relTerm relOp factor
 	{%
 		function (data) {
 			return {
@@ -167,61 +197,36 @@ expression ->
 			}
 		}
 	%}
-	|	expression "OR" term
+	|	factor	{% (data) => data[0] %}
+
+factor -> 
+	value 	{% (data) => data[0] %}
+	| "(" expression ")"
 	{%
 		function (data) {
-			return {
-				operando1: data[0],
-				operando2: data[2],
-				operador: data[1]
-			}
+			return data[1]
 		}
 	%}
-	| term
-
-	term 			-> factor
-						| term "AND" factor
-						{%
-							function (data) {
-								return {
-									operando1: data[0],
-									operando2: data[2],
-									operador: data[1]
-								}
-							}
-						%}
-	factor 		-> %int
-							{%
-								function (data) {
-									return data[0]
-								}
-							%}
-						| "(" expression ")"
-						{%
-							function (data) {
-								return data[1]
-							}
-						%}
-						| %id
-						{%
-							function (data) {
-								return data[0]
-							}
-						%}
-						| "true"
-						| "false"
+	| %id ("." %id):?
+	{%
+		function (data) {
+			return data[0]
+		}
+	%}
+	| "true"
+	| "false"
 
 
-relOp 	->	"<="
-	|	">="
-	|	"<"
-	|	">"
-	|	"<>"
-	|	"="
+relOp 	->	"<="	{% (data) => data[0] %}
+	|	">="		{% (data) => data[0] %}
+	|	"<"			{% (data) => data[0] %}
+	|	">"			{% (data) => data[0] %}
+	|	"<>"		{% (data) => data[0] %}
+	|	"="			{% (data) => data[0] %}
 
 
 value ->
-		%int
-	|	%float
-	|	%date
-	|	%char
+		%int 	{% (data) => data[0] %}
+	|	%float 	{% (data) => data[0] %}
+	|	%date 	{% (data) => data[0] %}
+	|	%char 	{% (data) => data[0] %}
