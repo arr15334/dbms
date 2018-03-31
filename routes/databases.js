@@ -73,7 +73,7 @@ function formatQuery () {
       if (statement.type === 'id' && !isColumn) {
         if (!finalQuery.id.name) {
           finalQuery.id.name = statement.value
-        } else if (finalQuery.action === 'INSERT') {
+        } else if (finalQuery.action === 'INSERT' || finalQuery.action === 'SET') {
           finalQuery.columnsToAdd.push(statement.value)
         } else {
           finalQuery.id.newName = statement.value
@@ -91,11 +91,6 @@ function formatQuery () {
         elems = formatAst(statement.primaryKey.elems)
         finalQuery.constraints.primaryKey.name = statement.primaryKey.name.value
         finalQuery.constraints.primaryKey.elems = elems
-        constraints.push({
-          type: 'PK',
-          name: statement.primaryKey.name.value,
-          elems: elems
-        })
       }
       if (statement.type === 'foreignKey') {
         const elems = formatAst(statement.foreignKey.elems)
@@ -104,13 +99,6 @@ function formatQuery () {
         finalQuery.constraints.foreignKey.elements = elems
         finalQuery.constraints.foreignKey.referenceTable = statement.foreignKey.referenceTable.value
         finalQuery.constraints.foreignKey.referenceColumns = formatAst(statement.foreignKey.referenceColumn)
-        constraints.push({
-          type: 'FK',
-          name: statement.foreignKey.name.value,
-          localColumns: elems,
-          referenceTable: statement.foreignKey.referenceTable.value,
-          referenceColumns: formatAst(statement.foreignKey.referenceColumn)
-        })
       }
       if (statement.type === 'check') {
         finalQuery.constraints.check = {
@@ -124,7 +112,11 @@ function formatQuery () {
         })
       }
       if (statement.type === 'int' || statement.type === 'float' || statement.type === 'date' || statement.type === 'char' ) {
-        finalQuery.values.push(statement.value)
+        if (finalQuery.action === 'SET') finalQuery.values.push(statement)
+        else finalQuery.values.push(statement.value)
+      }
+      if (statement.operando1 || statement.operador) {
+        finalQuery.expression = statement
       }
     }
   }
@@ -192,6 +184,8 @@ function routeQueries(query) {
       } else if (action === 'INSERT') {
         if (object === 'VALUES') return register_queries.insert(db, query.id.name, query.columnsToAdd, query.values)
         else return 'Error: bad query'
+      } else if (action === 'SET') {
+        return register_queries.update(db, query.id.name, query.columnsToAdd, query.values, query.expression || {})
       }
       else {
         return 'Error: bad query'

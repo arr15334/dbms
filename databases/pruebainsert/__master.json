@@ -1,1 +1,1 @@
-{"prueba1":{"columns":{"test":{"type":"INT"}},"schema":{"test":null},"constraints":{}}}
+{"prueba1":{"columns":{"test":{"type":"INT"}},"schema":{"test":null},"constraints":{}},"prueba2":{"columns":{"id":{"type":"INT"},"age":{"type":"INT"}},"schema":{"id":null,"age":null},"constraints":{}}}

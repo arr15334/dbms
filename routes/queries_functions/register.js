@@ -220,7 +220,7 @@ register_queries.update = function(db, table, columns, values, expression) {
 
     //Se lee la informacion en el archivo maestro de la base de datos
     let data = JSON.parse(fs.readFileSync(path + db + '/__master.json', 'utf8'));
-    let columnsInfo = data.columns;
+    let columnsInfo = data[table].columns;
 
     // exp = {
     //     "operando1" : {
@@ -247,7 +247,8 @@ register_queries.update = function(db, table, columns, values, expression) {
 
     //Se revisa que los valores a cambiar sean del tipo correcto
     for (let i = 0; i < values.length; i++) {
-        if (values[i].type != columnsInfo[columns[i]].type) {
+        if (values[i].type.toUpperCase() != columnsInfo[columns[i]].type) {
+          console.log(values[i].type.toUpperCase() + columnsInfo[columns[i]].type);
             let error = "Error: El tipo de dato que se está tratando de usar en la columna '" + columns[i] + "' es incorrecto.";
 
             return {
@@ -279,8 +280,8 @@ register_queries.update = function(db, table, columns, values, expression) {
             }
         }
         if (res) {
-            let j = 0;
-            for (; j < columns.length; j++) {
+
+            for (let j = 0; j < columns.length; j++) {
                 tableData.registers[i][columns[j]] = values[j].values;
             }
             cont++
