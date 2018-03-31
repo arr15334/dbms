@@ -25,9 +25,11 @@ router.post('/queries', function (req, res) {
     .then(() => {
       return formatQuery()
     })
+    /*
     .then((query) => {
       return routeQueries(query)
     })
+    */
     .then((result) => {
       res.json(result)
     })
@@ -54,7 +56,9 @@ function formatQuery () {
       newName: ''
     },
     columns: {},
-    constraints: {}
+    constraints: {},
+    columnsToAdd: [],
+    values: []
   }
   let columns = []
   let constraints = []
@@ -69,10 +73,12 @@ function formatQuery () {
         finalQuery.object = statement.value
       }
       if (statement.type === 'id' && !isColumn) {
-        if (finalQuery.id.name) {
-          finalQuery.id.newName = statement.value
-        } else {
+        if (!finalQuery.id.name) {
           finalQuery.id.name = statement.value
+        } else if (finalQuery.action === 'INSERT') {
+          finalQuery.columnsToAdd.push(statement.value)
+        } else {
+          finalQuery.id.newName = statement.value
         }
       }
       if (statement.type === 'column') {
@@ -111,13 +117,16 @@ function formatQuery () {
       if (statement.type === 'check') {
         finalQuery.constraints.check = {
           name: statement.check.name.value,
-          expression: statement.check.checkExp
+          expression: extractObjectFromList(statement.check.checkExp)
         }
         constraints.push({
           type: 'CHECK',
           name: statement.check.name.value,
           expression: statement.check.checkExp
         })
+      }
+      if (statement.type === 'int' || statement.type === 'float' || statement.type === 'date' || statement.type === 'char' ) {
+        finalQuery.values.push(statement.value)
       }
     }
   }
@@ -182,7 +191,11 @@ function routeQueries(query) {
       } else if (action === 'ADD') {
           if (object === 'COLUMN') return table_queries.addColumn(db ,query.id.name, Object.keys(query.columns)[0], query.columns[Object.keys(query.columns)[0]].type, query.constraints)
           else if (object === 'CONSTRAINT') return table_queries.addConstraint(db, query.id.name, query.constraints[Object.keys(query.constraints)[0]])
-      } else {
+      } else if (action === 'INSERT') {
+        if (object === 'VALUES') return register_queries.insert(db, query.id.name, query.columnsToAdd, query.values)
+        else return 'Error: bad query'
+      }
+      else {
         return 'Error: bad query'
       }
     })
@@ -224,7 +237,6 @@ function routeQueries(query) {
 */
   //The function is called by an element of sort, and returns a message
   // return sort[query.action][query.object];
-
 }
 
 function getCurrentDatabase () {
@@ -237,6 +249,13 @@ function getCurrentDatabase () {
     })
 }
 
-
+function extractObjectFromList (l) {
+  if ((l instanceof Array)) {
+    let nextL = l[0]
+    return extractObjectFromList(nextL)
+  } else {
+    return l
+  }
+}
 
 module.exports = router;

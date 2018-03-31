@@ -7,8 +7,8 @@ function id(x) { return x[0]; }
 const moo = require('moo');
 
 let lexer = moo.compile({
-	command: 	['CREATE', 'ALTER', 'RENAME',  'DROP', 'SHOW', 'USE', 'FROM', 'ADD', 'INSERT', 'INTO', 'SELECT', 'FROM', 'WHERE', 'UPDATE', 'DELETE', 'SET', 'VALUES'],
-	object: 	['DATABASE', 'DATABASES', 'TABLE', 'TABLES', 'COLUMNS', 'COLUMN'],
+	command: 	['CREATE', 'ALTER', 'RENAME',  'DROP', 'SHOW', 'USE', 'FROM', 'ADD', 'INSERT',  'SELECT', 'FROM', 'WHERE', 'UPDATE', 'DELETE', 'SET'],
+	object: 	['DATABASE', 'DATABASES', 'TABLE', 'TABLES', 'COLUMNS', 'COLUMN','INTO' , 'VALUES'],
 	constraintKeyword: ['KEY', 'PRIMARY', 'FOREIGN', 'CHECK', 'CONSTRAINT', 'PK_', 'REFERENCES', 'CH_', 'FK_'],
 	varType: 	['INT', 'FLOAT', 'DATE', 'CHAR'],
 	keyword:	['NOT', 'AND', 'TO', 'OR', 'LIKE', 'SOME', 'ANY', 'IN', 'BETWEEN', 'ALL', 'EXISTS', 'ORDER', 'BY'],
@@ -25,9 +25,9 @@ let lexer = moo.compile({
 	'*': '*',
 	'<=': '<=',
 	'>=': '>=',
+	'<>': '<>',
 	'>': '>',
 	'<': '<',
-	'<>': '<>',
 	'=': '='
 })
 
@@ -63,13 +63,16 @@ var grammar = {
     {"name": "query", "symbols": [{"literal":"DROP"}, {"literal":"TABLE"}, (lexer.has("id") ? {type: "id"} : id)]},
     {"name": "query", "symbols": [{"literal":"SHOW"}, {"literal":"TABLES"}]},
     {"name": "query", "symbols": [{"literal":"SHOW"}, {"literal":"COLUMNS"}, {"literal":"FROM"}, (lexer.has("id") ? {type: "id"} : id)]},
-    {"name": "query$ebnf$3", "symbols": []},
-    {"name": "query$ebnf$3$subexpression$1", "symbols": [{"literal":","}, (lexer.has("id") ? {type: "id"} : id)]},
-    {"name": "query$ebnf$3", "symbols": ["query$ebnf$3", "query$ebnf$3$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "query$ebnf$3$subexpression$1$ebnf$1", "symbols": []},
+    {"name": "query$ebnf$3$subexpression$1$ebnf$1$subexpression$1", "symbols": [{"literal":","}, (lexer.has("id") ? {type: "id"} : id)]},
+    {"name": "query$ebnf$3$subexpression$1$ebnf$1", "symbols": ["query$ebnf$3$subexpression$1$ebnf$1", "query$ebnf$3$subexpression$1$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "query$ebnf$3$subexpression$1", "symbols": [{"literal":"("}, (lexer.has("id") ? {type: "id"} : id), "query$ebnf$3$subexpression$1$ebnf$1", {"literal":")"}]},
+    {"name": "query$ebnf$3", "symbols": ["query$ebnf$3$subexpression$1"], "postprocess": id},
+    {"name": "query$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "query$ebnf$4", "symbols": []},
     {"name": "query$ebnf$4$subexpression$1", "symbols": [{"literal":","}, "value"]},
     {"name": "query$ebnf$4", "symbols": ["query$ebnf$4", "query$ebnf$4$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "query", "symbols": [{"literal":"INSERT"}, {"literal":"INTO"}, (lexer.has("id") ? {type: "id"} : id), {"literal":"("}, (lexer.has("id") ? {type: "id"} : id), "query$ebnf$3", {"literal":")"}, {"literal":"VALUES"}, {"literal":"("}, "value", "query$ebnf$4", {"literal":")"}]},
+    {"name": "query", "symbols": [{"literal":"INSERT"}, {"literal":"INTO"}, (lexer.has("id") ? {type: "id"} : id), "query$ebnf$3", {"literal":"VALUES"}, {"literal":"("}, "value", "query$ebnf$4", {"literal":")"}]},
     {"name": "query$ebnf$5", "symbols": []},
     {"name": "query$ebnf$5$subexpression$1", "symbols": [{"literal":","}, (lexer.has("id") ? {type: "id"} : id), {"literal":"="}, "value"]},
     {"name": "query$ebnf$5", "symbols": ["query$ebnf$5", "query$ebnf$5$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
@@ -187,7 +190,7 @@ var grammar = {
         	return {
         		operando1: data[0],
         		operando2: data[2],
-        		operador: data[1]
+        		operador: "OR"
         	}
         }
         	},
@@ -197,7 +200,7 @@ var grammar = {
         	return {
         		operando1: data[0],
         		operando2: data[2],
-        		operador: data[1]
+        		operador: "AND"
         	}
         }
         	},
@@ -205,7 +208,7 @@ var grammar = {
     {"name": "notTerm", "symbols": [{"literal":"NOT"}, "relTerm"], "postprocess": 
         function (data) {
         	return {
-        		operador: data[0],
+        		operador: "NOT",
         		operando1: data[1]
         	}
         }
@@ -227,26 +230,64 @@ var grammar = {
         	return data[1]
         }
         	},
-    {"name": "factor$ebnf$1$subexpression$1", "symbols": [{"literal":"."}, (lexer.has("id") ? {type: "id"} : id)]},
-    {"name": "factor$ebnf$1", "symbols": ["factor$ebnf$1$subexpression$1"], "postprocess": id},
-    {"name": "factor$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "factor", "symbols": [(lexer.has("id") ? {type: "id"} : id), "factor$ebnf$1"], "postprocess": 
+    {"name": "factor", "symbols": [(lexer.has("id") ? {type: "id"} : id)], "postprocess": 
         function (data) {
-        	return data[0]
+        	return {
+        		'type': 'id',
+        		'value': data[0].value
+        	}
         }
         	},
-    {"name": "factor", "symbols": [{"literal":"true"}]},
-    {"name": "factor", "symbols": [{"literal":"false"}]},
-    {"name": "relOp", "symbols": [{"literal":"<="}], "postprocess": (data) => data[0]},
-    {"name": "relOp", "symbols": [{"literal":">="}], "postprocess": (data) => data[0]},
-    {"name": "relOp", "symbols": [{"literal":"<"}], "postprocess": (data) => data[0]},
-    {"name": "relOp", "symbols": [{"literal":">"}], "postprocess": (data) => data[0]},
-    {"name": "relOp", "symbols": [{"literal":"<>"}], "postprocess": (data) => data[0]},
-    {"name": "relOp", "symbols": [{"literal":"="}], "postprocess": (data) => data[0]},
-    {"name": "value", "symbols": [(lexer.has("int") ? {type: "int"} : int)], "postprocess": (data) => data[0]},
-    {"name": "value", "symbols": [(lexer.has("float") ? {type: "float"} : float)], "postprocess": (data) => data[0]},
-    {"name": "value", "symbols": [(lexer.has("date") ? {type: "date"} : date)], "postprocess": (data) => data[0]},
-    {"name": "value", "symbols": [(lexer.has("char") ? {type: "char"} : char)], "postprocess": (data) => data[0]}
+    {"name": "factor", "symbols": [(lexer.has("id") ? {type: "id"} : id), {"literal":"."}, (lexer.has("id") ? {type: "id"} : id)], "postprocess": 
+        function (data) {
+        	return {
+        		'table': data[0].value,
+        		'column': data[1].value
+        	}
+        }
+        	},
+    {"name": "factor", "symbols": [{"literal":"true"}], "postprocess": 
+        function (data) {
+        	return {
+        		'type': 'boolean',
+        		'value': 'true'
+        	}
+        }
+        	},
+    {"name": "factor", "symbols": [{"literal":"false"}], "postprocess": 
+        function (data) {
+        	return {
+        		'type': 'boolean',
+        		'value': 'false'
+        	}
+        }
+        	},
+    {"name": "relOp", "symbols": [{"literal":"<="}], "postprocess": (data) => data[0].value},
+    {"name": "relOp", "symbols": [{"literal":">="}], "postprocess": (data) => data[0].value},
+    {"name": "relOp", "symbols": [{"literal":"<"}], "postprocess": (data) => data[0].value},
+    {"name": "relOp", "symbols": [{"literal":">"}], "postprocess": (data) => data[0].value},
+    {"name": "relOp", "symbols": [{"literal":"<>"}], "postprocess": (data) => data[0].value},
+    {"name": "relOp", "symbols": [{"literal":"="}], "postprocess": (data) => data[0].value},
+    {"name": "value", "symbols": [(lexer.has("int") ? {type: "int"} : int)], "postprocess": 
+        function (data) {
+        	return {'type': 'int', 'value': data[0].value}
+        }
+        		},
+    {"name": "value", "symbols": [(lexer.has("float") ? {type: "float"} : float)], "postprocess": 
+        function (data) {
+        	return {'type': 'int', 'value': data[0].value}
+        }
+        	},
+    {"name": "value", "symbols": [(lexer.has("date") ? {type: "date"} : date)], "postprocess": 
+        function (data) {
+        	return {'type': 'int', 'value': data[0].value}
+        }
+        	},
+    {"name": "value", "symbols": [(lexer.has("char") ? {type: "char"} : char)], "postprocess": 
+        function (data) {
+        	return {'type': 'int', 'value': data[0].value}
+        }
+        	}
 ]
   , ParserStart: "program"
 }

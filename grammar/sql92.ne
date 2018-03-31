@@ -4,8 +4,8 @@
 const moo = require('moo');
 
 let lexer = moo.compile({
-	command: 	['CREATE', 'ALTER', 'RENAME',  'DROP', 'SHOW', 'USE', 'FROM', 'ADD', 'INSERT', 'INTO', 'SELECT', 'FROM', 'WHERE', 'UPDATE', 'DELETE', 'SET', 'VALUES'],
-	object: 	['DATABASE', 'DATABASES', 'TABLE', 'TABLES', 'COLUMNS', 'COLUMN'],
+	command: 	['CREATE', 'ALTER', 'RENAME',  'DROP', 'SHOW', 'USE', 'FROM', 'ADD', 'INSERT',  'SELECT', 'FROM', 'WHERE', 'UPDATE', 'DELETE', 'SET'],
+	object: 	['DATABASE', 'DATABASES', 'TABLE', 'TABLES', 'COLUMNS', 'COLUMN','INTO' , 'VALUES'],
 	constraintKeyword: ['KEY', 'PRIMARY', 'FOREIGN', 'CHECK', 'CONSTRAINT', 'PK_', 'REFERENCES', 'CH_', 'FK_'],
 	varType: 	['INT', 'FLOAT', 'DATE', 'CHAR'],
 	keyword:	['NOT', 'AND', 'TO', 'OR', 'LIKE', 'SOME', 'ANY', 'IN', 'BETWEEN', 'ALL', 'EXISTS', 'ORDER', 'BY'],
@@ -22,9 +22,9 @@ let lexer = moo.compile({
 	'*': '*',
 	'<=': '<=',
 	'>=': '>=',
+	'<>': '<>',
 	'>': '>',
 	'<': '<',
-	'<>': '<>',
 	'=': '='
 })
 
@@ -55,8 +55,8 @@ query ->
 	|	"ALTER" "TABLE" %id (action)
 	|	"DROP" "TABLE" %id
 	|	"SHOW" "TABLES"
-	|	"SHOW" "COLUMNS" "FROM" %id 
-	|	"INSERT" "INTO" %id "(" %id ("," %id):* ")" "VALUES" "(" value ("," value):* ")"
+	|	"SHOW" "COLUMNS" "FROM" %id
+	|	"INSERT" "INTO" %id ("(" %id ("," %id):* ")"):? "VALUES" "(" value ("," value):* ")"
 	|	"UPDATE" %id "SET" %id "=" value ("," %id "=" value):* ("WHERE" expression):?
 	|	"DELETE" "FROM" %id ("WHERE" expression):?
 	|	selectQuery
@@ -65,15 +65,15 @@ query ->
 selectQuery ->
 		"SELECT" ("*"| %id ("," %id):*) "FROM" %id ("," %id):* ("WHERE" expression):? ("ORDER" "BY" expression ("ASC"|"DESC") ("," expression ("ASC"|"DESC")):* ):?
 
-#Starts condition declaration, with operator precedence. 
-condition -> 
+#Starts condition declaration, with operator precedence.
+condition ->
 		expression
 	|	expression ("NOT"):? "BETWEEN" expression "AND" expression
 	|	expression ("NOT"):? "IN"  "(" selectQuery ")"
 	|	expression ("NOT"):? "LIKE" pattern
 	|	"EXISTS" "(" selectQuery ")"
 	|	expression relOp "ALL" "(" selectQuery ")"
-	|	expression relOp ("ANY"|"SOME") "(" selectQuery ")" 
+	|	expression relOp ("ANY"|"SOME") "(" selectQuery ")"
 
 
 pattern -> "%" %id "%"
@@ -154,20 +154,20 @@ expression ->
 			return {
 				operando1: data[0],
 				operando2: data[2],
-				operador: data[1]
+				operador: "OR"
 			}
 		}
 	%}
 	| andTerm {% (data) => data[0] %}
 
-andTerm -> 
+andTerm ->
 	 	andTerm "AND" notTerm
 	{%
 		function (data) {
 			return {
 				operando1: data[0],
 				operando2: data[2],
-				operador: data[1]
+				operador: "AND"
 			}
 		}
 	%}
@@ -179,7 +179,7 @@ notTerm ->
 	{%
 		function (data) {
 			return {
-				operador: data[0],
+				operador: "NOT",
 				operando1: data[1]
 			}
 		}
@@ -199,7 +199,7 @@ relTerm ->
 	%}
 	|	factor	{% (data) => data[0] %}
 
-factor -> 
+factor ->
 	value 	{% (data) => data[0] %}
 	| "(" expression ")"
 	{%
@@ -207,26 +207,74 @@ factor ->
 			return data[1]
 		}
 	%}
-	| %id ("." %id):?
+	| %id
 	{%
 		function (data) {
-			return data[0]
+			return {
+				'type': 'id',
+				'value': data[0].value
+			}
+		}
+	%}
+	| %id "." %id
+	{%
+		function (data) {
+			return {
+				'table': data[0].value,
+				'column': data[1].value
+			}
 		}
 	%}
 	| "true"
+	{%
+		function (data) {
+			return {
+				'type': 'boolean',
+				'value': 'true'
+			}
+		}
+	%}
 	| "false"
+	{%
+		function (data) {
+			return {
+				'type': 'boolean',
+				'value': 'false'
+			}
+		}
+	%}
 
 
-relOp 	->	"<="	{% (data) => data[0] %}
-	|	">="		{% (data) => data[0] %}
-	|	"<"			{% (data) => data[0] %}
-	|	">"			{% (data) => data[0] %}
-	|	"<>"		{% (data) => data[0] %}
-	|	"="			{% (data) => data[0] %}
+relOp 	->	"<="	{% (data) => data[0].value %}
+	|	">="		{% (data) => data[0].value %}
+	|	"<"			{% (data) => data[0].value %}
+	|	">"			{% (data) => data[0].value %}
+	|	"<>"		{% (data) => data[0].value %}
+	|	"="			{% (data) => data[0].value %}
 
 
 value ->
-		%int 	{% (data) => data[0] %}
-	|	%float 	{% (data) => data[0] %}
-	|	%date 	{% (data) => data[0] %}
-	|	%char 	{% (data) => data[0] %}
+		%int
+		{%
+			function (data) {
+				return {'type': 'int', 'value': data[0].value}
+			}
+		%}
+	|	%float
+	{%
+		function (data) {
+			return {'type': 'int', 'value': data[0].value}
+		}
+	%}
+	|	%date
+	{%
+		function (data) {
+			return {'type': 'int', 'value': data[0].value}
+		}
+	%}
+	|	%char
+	{%
+		function (data) {
+			return {'type': 'int', 'value': data[0].value}
+		}
+	%}
