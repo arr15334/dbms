@@ -25,11 +25,9 @@ router.post('/queries', function (req, res) {
     .then(() => {
       return formatQuery()
     })
-    /*
     .then((query) => {
       return routeQueries(query)
     })
-    */
     .then((result) => {
       res.json(result)
     })

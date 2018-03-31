@@ -44,7 +44,7 @@ register_queries.insert = function(db, table, columns, values) {
                     schema[column] = values[i];
                 }
                 //Si el número que se está tratando de guardar es float, se le hace truncate
-                else if (typeof values[i] == "number") {
+                else if (typeof (values[i]*1) == "number") {
                     schema[column] = Number.parseInt(values[i], 10);
                 }
                 //En caso que no sea un número, se lanzará un error
