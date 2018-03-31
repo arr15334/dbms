@@ -222,19 +222,6 @@ register_queries.update = function(db, table, columns, values, expression) {
     let data = JSON.parse(fs.readFileSync(path + db + '/__master.json', 'utf8'));
     let columnsInfo = data[table].columns;
 
-    // exp = {
-    //     "operando1" : {
-    //         "value": "salat",
-    //         "type": "id"
-    //     },
-    //     "operando2" : {
-    //         "value" : "b",
-    //         "type" : "INT"
-    //     },
-    //     "operador" : "<>"
-    // }
-    // console.log(navigateTree(data[table].columns, {"salat":"2"}, exp));
-
     //Se revisa que exista la tabla
     if (!data.hasOwnProperty(table)) {
         let error = "Error: No existe la tabla '" + table + "' en la Base de Datos '" + db + "'.";
@@ -280,16 +267,17 @@ register_queries.update = function(db, table, columns, values, expression) {
             }
         }
         if (res) {
-
-            for (let j = 0; j < columns.length; j++) {
-                tableData.registers[i][columns[j]] = values[j].values;
+            let j = 0;
+            for (; j < columns.length; j++) {
+                tableData.registers[i][columns[j]] = values[j].value;
             }
             cont++
         }
     }
 
     //Se guarda la información
-    fs.writeFileSync(path + db + '/' + table + ".json", JSON.stringify(tableData));
+    if (cont > 0)
+        fs.writeFileSync(path + db + '/' + table + ".json", JSON.stringify(tableData));
 
     return {
         "success" : true,
@@ -310,7 +298,7 @@ register_queries.delete = function(db, table, expression) {
         }
     }
 
-    let columnsInfo = data.columns;
+    let columnsInfo = data[table].columns;
 
     //Se lee la informacion de la tabla
     let tableData = JSON.parse(fs.readFileSync(path + db + '/' + table + '.json', 'utf8'));
@@ -334,17 +322,18 @@ register_queries.delete = function(db, table, expression) {
             }
         }
         if (res) {
-            delete tableData.registers[i];
+            tableData.registers.splice(i, 1);
             cont++
         }
     }
 
-    //Se guarda la información
-    fs.writeFileSync(path + db + '/' + table + ".json", JSON.stringify(tableData));
+    //Se guarda la información si hubo algún cambio
+    if (cont > 0)
+        fs.writeFileSync(path + db + '/' + table + ".json", JSON.stringify(tableData));
 
     return {
         "success" : true,
-        "message" : "UPDATE (" + cont + ") con éxito."
+        "message" : "DELETE (" + cont + ") con éxito."
     }
 }
 
