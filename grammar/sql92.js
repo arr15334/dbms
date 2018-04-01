@@ -17,12 +17,13 @@ let lexer = moo.compile({
 	float:		/-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)\b/,
 	int:		/-?(?:[0-9]|[1-9][0-9]+)\b/,
 	date:		/\'[0-9]{4}\-[0-9]{2}\-[0-9]{2}\'/,
-	char:		/\'[a-zA-Z]+\'/,
+	char:		/'[a-zA-Z]+'/,
 	';': ';',
 	'(': '(',
 	')': ')',
 	',': ',',
 	'*': '*',
+	'\'': '\'',
 	'<=': '<=',
 	'>=': '>=',
 	'<>': '<>',
@@ -275,17 +276,17 @@ var grammar = {
         		},
     {"name": "value", "symbols": [(lexer.has("float") ? {type: "float"} : float)], "postprocess": 
         function (data) {
-        	return {'type': 'int', 'value': data[0].value}
+        	return {'type': 'float', 'value': data[0].value}
         }
         	},
     {"name": "value", "symbols": [(lexer.has("date") ? {type: "date"} : date)], "postprocess": 
         function (data) {
-        	return {'type': 'int', 'value': data[0].value}
+        	return {'type': 'date', 'value': data[0].value}
         }
         	},
     {"name": "value", "symbols": [(lexer.has("char") ? {type: "char"} : char)], "postprocess": 
         function (data) {
-        	return {'type': 'int', 'value': data[0].value}
+        	return {'type': 'char', 'value': data[0].value}
         }
         	}
 ]
