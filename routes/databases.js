@@ -186,6 +186,8 @@ function routeQueries(query) {
         else return 'Error: bad query'
       } else if (action === 'SET') {
         return register_queries.update(db, query.id.name, query.columnsToAdd, query.values, query.expression || {})
+      } else if (action === 'DELETE') {
+        return register_queries.delete(db, query.id.name, query.expression || {})
       }
       else {
         return 'Error: bad query'

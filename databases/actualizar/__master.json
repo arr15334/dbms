@@ -1,0 +1,1 @@
+{"eso":{"columns":{"id":{"type":"INT"},"name":{"type":"CHAR(10)"},"age":{"type":"INT"}},"schema":{"id":null,"name":null,"age":null},"constraints":{"primaryKey":{"name":"id","elements":["id"]}}}}

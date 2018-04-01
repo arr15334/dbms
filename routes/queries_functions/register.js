@@ -162,8 +162,8 @@ register_queries.insert = function(db, table, columns, values) {
     let tableData = JSON.parse(fs.readFileSync(path + db + '/' + table + '.json', 'utf8'));
 
     //Se revisan los valores de la Primary Key
-    if (data[table].hasOwnProperty("primaryKey")) {
-        let pks = data[table].primaryKey.elements;
+    if (data[table].constraints.hasOwnProperty("primaryKey")) {
+        let pks = data[table].constraints.primaryKey.elements;
 
         //Revision de Primary Keys
         for (var i = 0; i < pks.length; i++) {
@@ -233,7 +233,7 @@ register_queries.update = function(db, table, columns, values, expression) {
 
     //Se revisa que los valores a cambiar sean del tipo correcto
     for (let i = 0; i < values.length; i++) {
-        if (values[i].type.toUpperCase() != columnsInfo[columns[i]].type) {
+        if (values[i].type.toUpperCase().substring(0,4) != columnsInfo[columns[i]].type.substring(0,4)) {
           console.log(values[i].type.toUpperCase() + columnsInfo[columns[i]].type);
             let error = "Error: El tipo de dato que se está tratando de usar en la columna '" + columns[i] + "' es incorrecto.";
 
@@ -339,7 +339,7 @@ register_queries.delete = function(db, table, expression) {
 function navigateTree(columns, register, expression) {
     let op1 = expression.operando1;
     let op2 = expression.operando2;
-    let act = expression.operador.value;
+    let act = expression.operador;
 
     if (op1.hasOwnProperty("operador1")) {
         let tempOp1 = {
@@ -388,7 +388,7 @@ function navigateTree(columns, register, expression) {
         }
     }
 
-    if (op1.type == op2.type) {
+    if (op1.type == op2.type.toUpperCase()) {
         let flag = false;
         let error = null;
         switch (act) {
