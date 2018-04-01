@@ -90,7 +90,7 @@ function formatQuery () {
         finalQuery.constraints.primaryKey = {}
         elems = formatAst(statement.primaryKey.elems)
         finalQuery.constraints.primaryKey.name = statement.primaryKey.name.value
-        finalQuery.constraints.primaryKey.elems = elems
+        finalQuery.constraints.primaryKey.elements = elems
       }
       if (statement.type === 'foreignKey') {
         const elems = formatAst(statement.foreignKey.elems)
@@ -105,11 +105,11 @@ function formatQuery () {
           name: statement.check.name.value,
           expression: extractObjectFromList(statement.check.checkExp)
         }
-        constraints.push({
-          type: 'CHECK',
-          name: statement.check.name.value,
-          expression: statement.check.checkExp
-        })
+      }
+      if (statement.type === 'constraintKeyword') {
+        if (finalQuery.action === 'ADD') {
+          finalQuery.object = statement.value
+        }
       }
       if (statement.type === 'int' || statement.type === 'float' || statement.type === 'date' || statement.type === 'char' ) {
         if (finalQuery.action === 'SET') finalQuery.values.push(statement)
@@ -180,7 +180,7 @@ function routeQueries(query) {
         }
       } else if (action === 'ADD') {
           if (object === 'COLUMN') return table_queries.addColumn(db ,query.id.name, Object.keys(query.columns)[0], query.columns[Object.keys(query.columns)[0]].type, query.constraints)
-          else if (object === 'CONSTRAINT') return table_queries.addConstraint(db, query.id.name, query.constraints[Object.keys(query.constraints)[0]])
+          else if (object === 'CONSTRAINT') return table_queries.addConstraint(db, query.id.name, query.constraints)
       } else if (action === 'INSERT') {
         if (object === 'VALUES') return register_queries.insert(db, query.id.name, query.columnsToAdd, query.values)
         else return 'Error: bad query'

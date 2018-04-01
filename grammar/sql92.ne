@@ -4,11 +4,11 @@
 const moo = require('moo');
 
 let lexer = moo.compile({
-	command: 	['CREATE', 'ALTER', 'RENAME',  'DROP', 'SHOW', 'USE', 'FROM', 'ADD', 'INSERT',  'SELECT', 'FROM', 'UPDATE', 'DELETE', 'SET'],
+	command: 	['CREATE', 'ALTER', 'RENAME',  'DROP', 'SHOW', 'USE',  'ADD', 'INSERT',  'SELECT', 'UPDATE', 'DELETE', 'SET'],
 	object: 	['DATABASE', 'DATABASES', 'TABLE', 'TABLES', 'COLUMNS', 'COLUMN','INTO' , 'VALUES', 'WHERE',],
 	constraintKeyword: ['KEY', 'PRIMARY', 'FOREIGN', 'CHECK', 'CONSTRAINT', 'PK_', 'REFERENCES', 'CH_', 'FK_'],
 	varType: 	['INT', 'FLOAT', 'DATE', 'CHAR'],
-	keyword:	['NOT', 'AND', 'TO', 'OR', 'LIKE', 'SOME', 'ANY', 'IN', 'BETWEEN', 'ALL', 'EXISTS', 'ORDER', 'BY'],
+	keyword:	['NOT', 'AND', 'TO', 'OR', 'LIKE', 'SOME', 'ANY', 'IN', 'BETWEEN', 'ALL', 'EXISTS', 'ORDER', 'FROM', 'BY'],
 	ws: 		{match: /\s+/, lineBreaks: true},
 	id:			/[a-zA-Z][a-zA-Z0-9]*/,
 	float:		/-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)\b/,
@@ -141,7 +141,7 @@ constraintDeclaration ->
 
 action ->
 		"ADD" "COLUMN" columnDeclaration ("CONSTRAINT" constraintDeclaration):?
-	|	"ADD" constraintDeclaration
+	|	"ADD" "CONSTRAINT" constraintDeclaration
 	|	"DROP" "COLUMN" %id
 	|	"DROP" "CONSTRAINT" %id
 

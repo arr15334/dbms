@@ -257,6 +257,7 @@ table_queries.deleteColumn = function(db, table, name) {
 }
 
 table_queries.addConstraint = function(db, table, constraint) {
+  console.log(constraint);
     //Se lee la informacion en el archivo maestro de la base de datos
     let data = JSON.parse(fs.readFileSync(path + db + '/__master.json', 'utf8'));
 
@@ -464,11 +465,14 @@ table_queries.showColumns = function(db, table) {
     //Se verifica que exista la tabla
     if (data.hasOwnProperty(table)) {
         let columns = data[table]["columns"];
-
+        let constraints = data[table]["constraints"];
         return {
           'success': true,
           'type': 'columns',
-          'columns': columns
+          'message': {
+            'columns': columns,
+            'constraints': constraints
+          }
         }
     } else {
         error = "No existe una tabla con el nombre '" + table + "'.";
