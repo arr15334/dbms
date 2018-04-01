@@ -1,0 +1,1 @@
+{"ojos":{"columns":{"color":{"type":"CHAR(5)"},"tamano":{"type":"FLOAT"},"cantidad":{"type":"INT"},"nacimieno":{"type":"DATE"}},"schema":{"color":null,"tamano":null,"cantidad":null,"nacimieno":null},"constraints":{"check":{"name":"cantidad","expression":{"operando1":{"type":"id","value":"cantidad"},"operando2":{"type":"int","value":"1"},"operador":">"}}}}}

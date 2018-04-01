@@ -11,9 +11,9 @@ let lexer = moo.compile({
 	keyword:	['NOT', 'AND', 'TO', 'OR', 'LIKE', 'SOME', 'ANY', 'IN', 'BETWEEN', 'ALL', 'EXISTS', 'ORDER', 'FROM', 'BY'],
 	ws: 		{match: /\s+/, lineBreaks: true},
 	id:			/[a-zA-Z][a-zA-Z0-9]*/,
+	date:		/'[0-9]{4}\-[0-9]{2}\-[0-9]{2}'/,
 	float:		/-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)\b/,
 	int:		/-?(?:[0-9]|[1-9][0-9]+)\b/,
-	date:		/\'[0-9]{4}\-[0-9]{2}\-[0-9]{2}\'/,
 	char:		/'[a-zA-Z]+'/,
 	';': ';',
 	'(': '(',
@@ -26,7 +26,8 @@ let lexer = moo.compile({
 	'<>': '<>',
 	'>': '>',
 	'<': '<',
-	'=': '='
+	'=': '=',
+	'-': '-'
 })
 
 lexer.next = (next => () => {

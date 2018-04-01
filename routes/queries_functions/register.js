@@ -64,7 +64,7 @@ register_queries.insert = function(db, table, columns, values) {
                     schema[column] = Number.parseFloat(values[i]);
                 }
                 //Si el número que se está tratando de guardar es float, se le hace truncate
-                else if (typeof values[i] == "number") {
+                else if ((typeof (values[i]*1)) == "number") {
                     schema[column] = values[i];
                 }
                 //En caso que no sea un número, se lanzará un error
@@ -84,12 +84,11 @@ register_queries.insert = function(db, table, columns, values) {
                     //Se trata de leer el año, mes y día. Si falla algún paso se considera un error
                     try {
                         let tempDate = values[i].split("-");
-                        let dateValues = [+tempDate[0], +tempDate[1], +tempDate[2]]
-
+                        let dateValues = values[i].split("-")// [+tempDate[0], +tempDate[1], +tempDate[2]]
                         //Se valida que la fecha sea válida
-                        if (Number.isInteger(dateValues0[0]) && Number.isInteger(dateValues[1]) && Number.isInteger(dateValues[2])) {
-                            if (dateValues[1] > 0 && dateValues[1] < 13 && dateValues[2] > 0 && dateValues[2] < 32) {
-                                schema[column] = values[i];
+                        if (Number.isInteger(dateValues[0].replace("'", "")*1) && Number.isInteger(dateValues[1]*1) && Number.isInteger(dateValues[2].replace("'", "")*1)) {
+                            if (dateValues[1]*1 > 0 && dateValues[1]*1 < 13 && dateValues[2].replace("'", "")*1 > 0 && dateValues[2].replace("'", "")*1 < 32) {
+                                schema[column] = values[i].replace(/'/g, "");
                             } else {
                                 error = "Error: Fecha inválida.";
 

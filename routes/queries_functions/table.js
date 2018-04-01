@@ -146,7 +146,7 @@ table_queries.deleteTable = function(db, table) {
 
         return {
           'success': true,
-          'message': 'Table '+name+ ' deleted in database '+db
+          'message': 'Table '+table+ ' deleted in database '+db
         }
 
     } else {
