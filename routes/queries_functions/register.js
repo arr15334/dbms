@@ -4,9 +4,19 @@ var fs = require('fs');
 
 const path = './databases/';
 
+var tablesCache = {};
+
 register_queries.insert = function(db, table, columns, values) {
     //Se lee la informacion en el archivo maestro de la base de datos
-    let data = JSON.parse(fs.readFileSync(path + db + '/__master.json', 'utf8'));
+    let data;
+    if (tablesCache.hasOwnProperty(db)) {
+        data = tablesCache[db].data;
+    } else {
+        data = JSON.parse(fs.readFileSync(path + db + '/__master.json', 'utf8'));
+        tablesCache[db] = {};
+        tablesCache[db].data = data;
+        tablesCache[db].tables = {};
+    }
 
     if (!data.hasOwnProperty(table)) {
         let error = "No existe la tabla '" + table + "' en la Base de Datos '" + db + "'.";
@@ -30,7 +40,7 @@ register_queries.insert = function(db, table, columns, values) {
         len = Object.keys(values).length;
     }
 
-    //Se validan y guardan los valores ingresados
+    //Se validan y guardan los valores ingresados en el schema
     for (var i = 0; i < len; i++) {
         let column = columns[i];
         if (dataColumns.hasOwnProperty(column)) {
@@ -54,136 +64,15 @@ register_queries.insert = function(db, table, columns, values) {
         }
     }
 
-    //Se recorren los valores ingresados
-    // for (var i = 0; i < len; i++) {
-    //     let column = columns[i];
-    //
-    //     if (dataColumns.hasOwnProperty(column)) {
-    //         let type = dataColumns[column].type;
-    //
-    //         //Caso que la columna sea tipo INT
-    //         if (type == "INT"){
-    //             //En caso que los dos tipos coincidan, simplemente se agrega al objeto nuevo
-    //             if (Number.isInteger(values[i])) {
-    //                 schema[column] = values[i];
-    //             }
-    //             //Si el número que se está tratando de guardar es float, se le hace truncate
-    //             else if (typeof (values[i]*1) == "number") {
-    //                 schema[column] = Number.parseInt(values[i], 10);
-    //             }
-    //             //En caso que no sea un número, se lanzará un error
-    //             else {
-    //                 error = "Error: Tipo incorrecto en la columna '" + column + "'. Debe ser " + type + ".";
-    //
-    //                 return  {
-    //                     "success": false,
-    //                     "message": error
-    //                 }
-    //             }
-    //         }
-    //         //Caso que la columna sea tipo FLOAT
-    //         else if (type == "FLOAT") {
-    //             //En caso que los dos tipos coincidan, simplemente se agrega al objeto nuevo
-    //             if (Number.isInteger(values[i])) {
-    //                 schema[column] = Number.parseFloat(values[i]);
-    //             }
-    //             //Si el número que se está tratando de guardar es float, se le hace truncate
-    //             else if ((typeof (values[i]*1)) == "number") {
-    //                 schema[column] = values[i];
-    //             }
-    //             //En caso que no sea un número, se lanzará un error
-    //             else {
-    //                 error = "Error: Tipo incorrecto en la columna '" + column + "'. Debe ser " + type + ".";
-    //
-    //                 return  {
-    //                     "success": false,
-    //                     "message": error
-    //                 }
-    //             }
-    //         }
-    //         //Caso que la columna sea tipo DATE
-    //         else if (type == "DATE") {
-    //             //Primero se revisa que el valor sea un string
-    //             if (typeof values[i] == "string") {
-    //                 //Se trata de leer el año, mes y día. Si falla algún paso se considera un error
-    //                 try {
-    //                     let tempDate = values[i].split("-");
-    //                     let dateValues = values[i].split("-")// [+tempDate[0], +tempDate[1], +tempDate[2]]
-    //                     //Se valida que la fecha sea válida
-    //                     if (Number.isInteger(dateValues[0].replace("'", "")*1) && Number.isInteger(dateValues[1]*1) && Number.isInteger(dateValues[2].replace("'", "")*1)) {
-    //                         if (dateValues[1]*1 > 0 && dateValues[1]*1 < 13 && dateValues[2].replace("'", "")*1 > 0 && dateValues[2].replace("'", "")*1 < 32) {
-    //                             schema[column] = values[i].replace(/'/g, "");
-    //                         } else {
-    //                             error = "Error: Fecha inválida.";
-    //
-    //                             return  {
-    //                                 "success": false,
-    //                                 "message": error
-    //                             }
-    //                         }
-    //                     } else {
-    //                         error = "Error: Tipo incorrecto en la columna '" + column + "'. Debe ser " + type + ".";
-    //
-    //                         return  {
-    //                             "success": false,
-    //                             "message": error
-    //                         }
-    //                     }
-    //                 } catch (e) {
-    //                     error = "Error: Tipo incorrecto en la columna '" + column + "'. Debe ser " + type + ".";
-    //
-    //                     return  {
-    //                         "success": false,
-    //                         "message": error
-    //                     }
-    //                 }
-    //             } else {
-    //                 error = "Error: Tipo incorrecto en la columna '" + column + "'. Debe ser " + type + ".";
-    //
-    //                 return  {
-    //                     "success": false,
-    //                     "message": error
-    //                 }
-    //             }
-    //         }
-    //         //Caso que la columna sea tipo CHAR
-    //         else {
-    //             //Primero se revisa que el valor sea un string
-    //             if (typeof values[i] == "string") {
-    //                 let charLen = +type.substring(5, type.length-1);
-    //
-    //                 //Se revisa que el string sea menor o igual al especificado
-    //                 if (values[i].length <= charLen) {
-    //                     schema[column] = values[i];
-    //                 } else {
-    //                     error = "Error: El string es de mayor tamaño al especificado, debe ser " + type + ".";
-    //
-    //                     return  {
-    //                         "success": false,
-    //                         "message": error
-    //                     }
-    //                 }
-    //             } else {
-    //                 error = "Error: Tipo incorrecto en la columna '" + column + "'. Debe ser " + type + ".";
-    //
-    //                 return  {
-    //                     "success": false,
-    //                     "message": error
-    //                 }
-    //             }
-    //         }
-    //     } else {
-    //         error = "Error: No existe la columna '" + column + "' en la tabla '" + table + "'.";
-    //
-    //         return  {
-    //             "success": false,
-    //             "message": error
-    //         }
-    //     }
-    // }
-
     //Se lee la informacion de la tabla
-    let tableData = JSON.parse(fs.readFileSync(path + db + '/' + table + '.json', 'utf8'));
+    var tableData;
+    if (tablesCache[db].tables.hasOwnProperty(table)) {
+        tableData = tablesCache[db].tables[table];
+    } else {
+        tableData = JSON.parse(fs.readFileSync(path + db + '/' + table + '.json', 'utf8'));
+        tablesCache[db].tables[table] = tableData;
+    }
+
 
     //Se revisan los valores de la Primary Key
     if (data[table].constraints.hasOwnProperty("primaryKey")) {
@@ -228,7 +117,7 @@ register_queries.insert = function(db, table, columns, values) {
             }
         }
         if (!tempRes) {
-            let error = "El registro que está tratando de ingresar no cumple con la condición de CHECK"Ñ
+            let error = "El registro que está tratando de ingresar no cumple con la condición de CHECK";
             return {
                 "success" : false,
                 "message" : error
@@ -241,8 +130,11 @@ register_queries.insert = function(db, table, columns, values) {
     data[table].registers = data[table].registers + 1;
 
     //Se guarda la información
+
     fs.writeFileSync(path + db + '/' + table + ".json", JSON.stringify(tableData));
+    tablesCache[db].tables[table] = tableData;
     fs.writeFileSync(path + db + "/__master.json", JSON.stringify(data));
+    tablesCache[db].data = data;
 
     return {
         "success": true,
@@ -331,7 +223,7 @@ register_queries.update = function(db, table, columns, values, expression) {
             }
         }
         if (!tempRes) {
-            let error = "El registro que está tratando de ingresar no cumple con la condición de CHECK"Ñ
+            let error = "El registro que está tratando de ingresar no cumple con la condición de CHECK"
             return {
                 "success" : false,
                 "message" : error
@@ -416,15 +308,17 @@ register_queries.select = function(db, columns, tables, expression) {
     }
 
     //Se validan que existen las columnas de expression
-    let newExp = validateTree(tablesInfo, expression);
-    if (typeof newExp == "string") {
-        return {
-            "success" : false,
-            "message" : newExp
+    if (Object.keys(expression).length > 0) {
+        let newExp = validateTree(tablesInfo, expression);
+        if (typeof newExp == "string") {
+            return {
+                "success" : false,
+                "message" : newExp
+            }
+        } else {
+            expression = newExp;
+            console.log(expression);
         }
-    } else {
-        expression = newExp;
-        console.log(expression);
     }
 
     //En caso que solo se use una tabla
@@ -468,7 +362,7 @@ register_queries.select = function(db, columns, tables, expression) {
             "columns": tablesInfo
         }
 
-        console.log(tempTable);
+        // console.log(tempTable);
 
         return res;
 
@@ -547,7 +441,7 @@ register_queries.select = function(db, columns, tables, expression) {
             "columns": tablesInfo
         }
 
-        console.log(tempTable);
+        // console.log(tempTable);
 
         return res;
     }
