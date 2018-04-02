@@ -259,24 +259,24 @@ value ->
 		%int
 		{%
 			function (data) {
-				return {'type': 'int', 'value': data[0].value}
+				return {'type': 'INT', 'value': data[0].value}
 			}
 		%}
 	|	%float
 	{%
 		function (data) {
-			return {'type': 'float', 'value': data[0].value}
+			return {'type': 'FLOAT', 'value': data[0].value}
 		}
 	%}
 	|	%date
 	{%
 		function (data) {
-			return {'type': 'date', 'value': data[0].value}
+			return {'type': 'DATE', 'value': data[0].value}
 		}
 	%}
 	|	%char
 	{%
 		function (data) {
-			return {'type': 'char', 'value': data[0].value}
+			return {'type': 'CHAR', 'value': data[0].value}
 		}
 	%}

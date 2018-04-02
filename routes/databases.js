@@ -14,14 +14,21 @@ const path = './databases/';
 var sqlQuery = {data: []}
 
 router.post('/queries', function (req, res) {
-  const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
-  parser.feed(req.body['sql_query'])
   // limpiar query anterior
   sqlQuery = {data: []}
-  parseResult(parser.results[0][0][0])
-  console.log(sqlQuery);
-  const sqlObj = formatQuery()
   return Promise.resolve()
+    .then(() => {
+      return new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
+    })
+    .then((parser) => {
+      parser.feed(req.body['sql_query'])
+      return parser
+    })
+    .then((parser) => {
+      parseResult(parser.results[0][0][0])
+      //console.log(sqlQuery);
+      //const sqlObj = formatQuery()
+    })
     .then(() => {
       return formatQuery()
     })
@@ -30,6 +37,13 @@ router.post('/queries', function (req, res) {
     })
     .then((result) => {
       res.json(result)
+    })
+    .catch((err) => {
+      console.log(err);
+      res.json({
+        'success': false,
+        'message': err
+      })
     })
 });
 
@@ -111,7 +125,7 @@ function formatQuery () {
           finalQuery.object = statement.value
         }
       }
-      if (statement.type === 'int' || statement.type === 'float' || statement.type === 'date' || statement.type === 'char' ) {
+      if (statement.type === 'INT' || statement.type === 'FLOAT' || statement.type === 'DATE' || statement.type === 'CHAR' ) {
         if (finalQuery.action === 'SET') finalQuery.values.push(statement)
         else finalQuery.values.push(statement.value)
       }
