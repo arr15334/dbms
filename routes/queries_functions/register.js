@@ -169,7 +169,7 @@ register_queries.insert = function(db, table, columns, values) {
         for (var i = 0; i < pks.length; i++) {
             let value = schema[pks[i]];
 
-            if (!(value == null)) {
+            if (value != null) {
                 if (!tableData.primaryKey[pks[i]].hasOwnProperty(value)) {
                     tableData.primaryKey[pks[i]][value] = null;
                 } else {
@@ -182,12 +182,11 @@ register_queries.insert = function(db, table, columns, values) {
                 }
             } else {
                 let error = "Error: No ingresó valor de la Primary Key '" + pks[i] + "'.";
-                
+
                 return {
                     "success": false,
                     "message": error
                 }
-
             }
         }
     }
@@ -234,7 +233,7 @@ register_queries.update = function(db, table, columns, values, expression) {
     //Se revisa que los valores a cambiar sean del tipo correcto
     for (let i = 0; i < values.length; i++) {
         if (values[i].type.substring(0,4) != columnsInfo[columns[i]].type.substring(0,4)) {
-          console.log(values[i].type.toUpperCase() + columnsInfo[columns[i]].type);
+          console.log(values[i].type + columnsInfo[columns[i]].type);
             let error = "Error: El tipo de dato que se está tratando de usar en la columna '" + columns[i] + "' es incorrecto.";
 
             return {
@@ -336,6 +335,23 @@ register_queries.delete = function(db, table, expression) {
     }
 }
 
+register_queries.select = function(columns, tables, expression) {
+    //FROM
+    let dbData = JSON.parse(fs.readFileSync(path + db + '/__master.json', 'utf8'));
+
+    //Se junta la informacion de todas las tablas definididas en el FROM
+    let tablesInfo = {};
+    let newTable = {};
+    for (let i = 0; i < tables.length; i++) {
+        tablesInfo[tables[i]] = dbData[tables[i]].columns;
+    }
+
+    //Se crea una nueva tabla haciendo el producto cartesiano de las tablas definidas
+    for (let i = 0; i < columns.length; i++) {
+
+    }
+}
+
 function navigateTree(columns, register, expression) {
     let op1 = expression.operando1;
     let op2 = expression.operando2;
@@ -388,7 +404,7 @@ function navigateTree(columns, register, expression) {
         }
     }
 
-    if (op1.type == op2.type.toUpperCase()) {
+    if (op1.type == op2.type) {
         let flag = false;
         let error = null;
         switch (act) {
