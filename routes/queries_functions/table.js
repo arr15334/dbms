@@ -13,6 +13,8 @@ table_queries.createTable = function(db, name, columns, constraints) {
         var obj = {};
 
         //Se agregan las propiedades de la tabla al objeto de esta
+        obj["registers"] = 0;
+
         obj["columns"] = columns;
 
         var schema = {};
