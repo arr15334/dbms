@@ -52,6 +52,7 @@ router.post('/queries', function (req, res) {
     res.json({results: messages});
 
   } catch (err) {
+    console.log(err);
     res.json({
       'success': false,
       'message': err
@@ -103,9 +104,9 @@ function formatQuery () {
       if (statement.type === 'id' && !isColumn) {
 		if (finalQuery.action === 'SELECT') {
           if (!isTable) {
-			finalQuery.select.columns.push(statement.value)
+			         finalQuery.select.columns.push(statement.value)
           } else {
-			finalQuery.select.tables.push(statement.value)
+			       finalQuery.select.tables.push(statement.value)
 		  }
         } else if (!finalQuery.id.name) {
           finalQuery.id.name = statement.value
@@ -160,7 +161,7 @@ function formatQuery () {
 	  if (statement.type === '*') {
 		  finalQuery.object = statement.value;
 	  }
-		  
+
       if (statement.operando1 || statement.operador) {
         finalQuery.expression = statement
       }
@@ -192,6 +193,7 @@ function formatAst (l) {
  * @return {string} message - String that contains the message if the query was successful
  */
 function routeQueries(query) {
+  console.log(query);
   const action = query.action
   const object = query.object
   const db = getCurrentDatabase();
@@ -235,8 +237,8 @@ function routeQueries(query) {
       } else if (action === 'DELETE') {
         return register_queries.delete(db, query.id.name, query.expression || {})
       } else if (action === 'SELECT') {
-		  if (query.object) return register_queries.select(db, null, query.tables, query.expression || {})
-		  else return register_queries.select(db, query.columns, query.tables, query.expression || {})
+		  if (query.object) return register_queries.select(db, null, query.select.tables, query.expression || {})
+		  else return register_queries.select(db, query.columns, query.select.tables, query.expression || {})
 	  }
       else {
         return 'Error: bad query'
