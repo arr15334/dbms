@@ -86,7 +86,10 @@ function formatQuery () {
 	select: {
 		columns: [],
 		tables: [],
-    order: {}
+    order: {
+      column: {},
+      order: ''
+    }
 	}
   }
   let columns = []
@@ -104,11 +107,7 @@ function formatQuery () {
       }
       if (statement.type === 'id' && !isColumn) {
 		      if (finalQuery.action === 'SELECT') {
-            if (isOrder && !(finalQuery.order)) {
-              finalQuery.select.order.column = {}
-              finalQuery.select.order.order = 'DESC'
-            }
-            if (isOrder && (finalQuery.select.order)) {
+            if (isOrder) {
               if (statement.value === 'ASC' || statement.value === 'DESC') {
                 finalQuery.select.order.order = statement.value
               } else {
@@ -118,7 +117,7 @@ function formatQuery () {
   			       finalQuery.select.columns.push(statement.value)
             } else {
   			       finalQuery.select.tables.push(statement.value)
-		  }
+		           }
         } else if (!finalQuery.id.name) {
           finalQuery.id.name = statement.value
         } else if (finalQuery.action === 'INSERT' || finalQuery.action === 'SET') {
