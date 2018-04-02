@@ -356,11 +356,13 @@ register_queries.select = function(db, columns, tables, expression, orderby) {
             }
         }
 
-        orderby.column = verifyOrderColumn(tablesInfo, orderby.column);
-        if (typeof orderby.column == "object") {
-            return orderby.column;
-        } else {
-            tempTable = sort(tempTable, orderby.column, orderby.order);
+        if (orderby != null) {
+            orderby.column = verifyOrderColumn(tablesInfo, orderby.column);
+            if (typeof orderby.column == "object") {
+                return orderby.column;
+            } else {
+                tempTable = sort(tempTable, orderby.column, orderby.order);
+            }
         }
 
         let res = {
@@ -443,11 +445,13 @@ register_queries.select = function(db, columns, tables, expression, orderby) {
             }
         }
 
-        orderby.column = verifyOrderColumn(tablesInfo, orderby.column);
-        if (typeof orderby.column == "object") {
-            return orderby.column;
-        } else {
-            tempTable = sort(tempTable, orderby.column, orderby.order);
+        if (orderby != null) {
+            orderby.column = verifyOrderColumn(tablesInfo, orderby.column);
+            if (typeof orderby.column == "object") {
+                return orderby.column;
+            } else {
+                tempTable = sort(tempTable, orderby.column, orderby.order);
+            }
         }
 
         let res = {
@@ -508,14 +512,14 @@ function merge (left, right, order) {
 }
 
 function verifyOrderColumn(columns, column) {
-    if (column.hasOwnProperty(table)) {
-        if (columns.hasOwnProperty(table)) {
-            if (columns[table].hasOwnProperty(column)) {
-                return table + "." + column;
+    if (column.hasOwnProperty(column.table)) {
+        if (columns.hasOwnProperty(column.table)) {
+            if (columns[column.table].hasOwnProperty(column.column)) {
+                return column.table + "." + column.column;
             } else {
                 return {
                     "success" : false,
-                    "message" : "La columna '" + column + "' no existe en la tabla '" + tabla + "'."
+                    "message" : "La columna '" + column.column + "' no existe en la tabla '" + column.table + "'."
                 }
             }
         } else {
@@ -529,7 +533,7 @@ function verifyOrderColumn(columns, column) {
         let cont = 0;
         for (var key in columns)
             if (columns.hasOwnProperty(key)) {
-                if (columns[key].hasOwnProperty(column)) {
+                if (columns[key].hasOwnProperty(column.column)) {
                     cont++;
                     tempTable = key;
                 }
@@ -537,15 +541,15 @@ function verifyOrderColumn(columns, column) {
         if (cont > 1) {
             return {
                 "success" : false,
-                "message" : "Existe más de una columna con el nombre '" + column + "'."
+                "message" : "Existe más de una columna con el nombre '" + column.column + "'."
             }
         } else if (cont == 0) {
             return {
                 "success" : false,
-                "message" : "No existe la columna '" + column + "'."
+                "message" : "No existe la columna '" + column.column + "'."
             }
         } else {
-            return tempTable + "." + column;
+            return tempTable + "." + column.column;
         }
     }
 }
