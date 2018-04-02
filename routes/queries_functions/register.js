@@ -512,7 +512,7 @@ function merge (left, right, order) {
 }
 
 function verifyOrderColumn(columns, column) {
-    if (column.hasOwnProperty(column.table)) {
+    if (typeof column == "object") {
         if (columns.hasOwnProperty(column.table)) {
             if (columns[column.table].hasOwnProperty(column.column)) {
                 return column.table + "." + column.column;
@@ -525,7 +525,7 @@ function verifyOrderColumn(columns, column) {
         } else {
             return {
                 "success" : false,
-                "message" : "La tabla '" + table + "' no esta definida."
+                "message" : "La tabla '" + column.table + "' no esta definida."
             }
         }
     } else {
@@ -533,7 +533,7 @@ function verifyOrderColumn(columns, column) {
         let cont = 0;
         for (var key in columns)
             if (columns.hasOwnProperty(key)) {
-                if (columns[key].hasOwnProperty(column.column)) {
+                if (columns[key].hasOwnProperty(column)) {
                     cont++;
                     tempTable = key;
                 }
@@ -541,15 +541,15 @@ function verifyOrderColumn(columns, column) {
         if (cont > 1) {
             return {
                 "success" : false,
-                "message" : "Existe más de una columna con el nombre '" + column.column + "'."
+                "message" : "Existe más de una columna con el nombre '" + column + "'."
             }
         } else if (cont == 0) {
             return {
                 "success" : false,
-                "message" : "No existe la columna '" + column.column + "'."
+                "message" : "No existe la columna '" + column + "'."
             }
         } else {
-            return tempTable + "." + column.column;
+            return tempTable + "." + column;
         }
     }
 }
