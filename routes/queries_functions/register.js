@@ -27,125 +27,21 @@ register_queries.insert = function(db, table, columns, values) {
         len = columns.length;
     }
     if (len > values) {
-        len = values.length;
+        len = Object.keys(values).length;
     }
 
-    //Se recorren los valores ingresados
+    //Se validan y guardan los valores ingresados
     for (var i = 0; i < len; i++) {
         let column = columns[i];
-
         if (dataColumns.hasOwnProperty(column)) {
-            let type = dataColumns[column].type;
+            if (values[i].type.substring(0,3) == dataColumns[column].type.substring(0,3)) {
+                schema[column] = values[i].value;
+            } else {
+                let error = "Error: El tipo de dato que se está tratando de usar en la columna '" + columns[i] + "' es incorrecto.";
 
-            //Caso que la columna sea tipo INT
-            if (type == "INT"){
-                //En caso que los dos tipos coincidan, simplemente se agrega al objeto nuevo
-                if (Number.isInteger(values[i])) {
-                    schema[column] = values[i];
-                }
-                //Si el número que se está tratando de guardar es float, se le hace truncate
-                else if (typeof (values[i]*1) == "number") {
-                    schema[column] = Number.parseInt(values[i], 10);
-                }
-                //En caso que no sea un número, se lanzará un error
-                else {
-                    error = "Error: Tipo incorrecto en la columna '" + column + "'. Debe ser " + type + ".";
-
-                    return  {
-                        "success": false,
-                        "message": error
-                    }
-                }
-            }
-            //Caso que la columna sea tipo FLOAT
-            else if (type == "FLOAT") {
-                //En caso que los dos tipos coincidan, simplemente se agrega al objeto nuevo
-                if (Number.isInteger(values[i])) {
-                    schema[column] = Number.parseFloat(values[i]);
-                }
-                //Si el número que se está tratando de guardar es float, se le hace truncate
-                else if ((typeof (values[i]*1)) == "number") {
-                    schema[column] = values[i];
-                }
-                //En caso que no sea un número, se lanzará un error
-                else {
-                    error = "Error: Tipo incorrecto en la columna '" + column + "'. Debe ser " + type + ".";
-
-                    return  {
-                        "success": false,
-                        "message": error
-                    }
-                }
-            }
-            //Caso que la columna sea tipo DATE
-            else if (type == "DATE") {
-                //Primero se revisa que el valor sea un string
-                if (typeof values[i] == "string") {
-                    //Se trata de leer el año, mes y día. Si falla algún paso se considera un error
-                    try {
-                        let tempDate = values[i].split("-");
-                        let dateValues = values[i].split("-")// [+tempDate[0], +tempDate[1], +tempDate[2]]
-                        //Se valida que la fecha sea válida
-                        if (Number.isInteger(dateValues[0].replace("'", "")*1) && Number.isInteger(dateValues[1]*1) && Number.isInteger(dateValues[2].replace("'", "")*1)) {
-                            if (dateValues[1]*1 > 0 && dateValues[1]*1 < 13 && dateValues[2].replace("'", "")*1 > 0 && dateValues[2].replace("'", "")*1 < 32) {
-                                schema[column] = values[i].replace(/'/g, "");
-                            } else {
-                                error = "Error: Fecha inválida.";
-
-                                return  {
-                                    "success": false,
-                                    "message": error
-                                }
-                            }
-                        } else {
-                            error = "Error: Tipo incorrecto en la columna '" + column + "'. Debe ser " + type + ".";
-
-                            return  {
-                                "success": false,
-                                "message": error
-                            }
-                        }
-                    } catch (e) {
-                        error = "Error: Tipo incorrecto en la columna '" + column + "'. Debe ser " + type + ".";
-
-                        return  {
-                            "success": false,
-                            "message": error
-                        }
-                    }
-                } else {
-                    error = "Error: Tipo incorrecto en la columna '" + column + "'. Debe ser " + type + ".";
-
-                    return  {
-                        "success": false,
-                        "message": error
-                    }
-                }
-            }
-            //Caso que la columna sea tipo CHAR
-            else {
-                //Primero se revisa que el valor sea un string
-                if (typeof values[i] == "string") {
-                    let charLen = +type.substring(5, type.length-1);
-
-                    //Se revisa que el string sea menor o igual al especificado
-                    if (values[i].length <= charLen) {
-                        schema[column] = values[i];
-                    } else {
-                        error = "Error: El string es de mayor tamaño al especificado, debe ser " + type + ".";
-
-                        return  {
-                            "success": false,
-                            "message": error
-                        }
-                    }
-                } else {
-                    error = "Error: Tipo incorrecto en la columna '" + column + "'. Debe ser " + type + ".";
-
-                    return  {
-                        "success": false,
-                        "message": error
-                    }
+                return {
+                    "success" : false,
+                    "message" : error
                 }
             }
         } else {
@@ -157,6 +53,134 @@ register_queries.insert = function(db, table, columns, values) {
             }
         }
     }
+
+    //Se recorren los valores ingresados
+    // for (var i = 0; i < len; i++) {
+    //     let column = columns[i];
+    //
+    //     if (dataColumns.hasOwnProperty(column)) {
+    //         let type = dataColumns[column].type;
+    //
+    //         //Caso que la columna sea tipo INT
+    //         if (type == "INT"){
+    //             //En caso que los dos tipos coincidan, simplemente se agrega al objeto nuevo
+    //             if (Number.isInteger(values[i])) {
+    //                 schema[column] = values[i];
+    //             }
+    //             //Si el número que se está tratando de guardar es float, se le hace truncate
+    //             else if (typeof (values[i]*1) == "number") {
+    //                 schema[column] = Number.parseInt(values[i], 10);
+    //             }
+    //             //En caso que no sea un número, se lanzará un error
+    //             else {
+    //                 error = "Error: Tipo incorrecto en la columna '" + column + "'. Debe ser " + type + ".";
+    //
+    //                 return  {
+    //                     "success": false,
+    //                     "message": error
+    //                 }
+    //             }
+    //         }
+    //         //Caso que la columna sea tipo FLOAT
+    //         else if (type == "FLOAT") {
+    //             //En caso que los dos tipos coincidan, simplemente se agrega al objeto nuevo
+    //             if (Number.isInteger(values[i])) {
+    //                 schema[column] = Number.parseFloat(values[i]);
+    //             }
+    //             //Si el número que se está tratando de guardar es float, se le hace truncate
+    //             else if ((typeof (values[i]*1)) == "number") {
+    //                 schema[column] = values[i];
+    //             }
+    //             //En caso que no sea un número, se lanzará un error
+    //             else {
+    //                 error = "Error: Tipo incorrecto en la columna '" + column + "'. Debe ser " + type + ".";
+    //
+    //                 return  {
+    //                     "success": false,
+    //                     "message": error
+    //                 }
+    //             }
+    //         }
+    //         //Caso que la columna sea tipo DATE
+    //         else if (type == "DATE") {
+    //             //Primero se revisa que el valor sea un string
+    //             if (typeof values[i] == "string") {
+    //                 //Se trata de leer el año, mes y día. Si falla algún paso se considera un error
+    //                 try {
+    //                     let tempDate = values[i].split("-");
+    //                     let dateValues = values[i].split("-")// [+tempDate[0], +tempDate[1], +tempDate[2]]
+    //                     //Se valida que la fecha sea válida
+    //                     if (Number.isInteger(dateValues[0].replace("'", "")*1) && Number.isInteger(dateValues[1]*1) && Number.isInteger(dateValues[2].replace("'", "")*1)) {
+    //                         if (dateValues[1]*1 > 0 && dateValues[1]*1 < 13 && dateValues[2].replace("'", "")*1 > 0 && dateValues[2].replace("'", "")*1 < 32) {
+    //                             schema[column] = values[i].replace(/'/g, "");
+    //                         } else {
+    //                             error = "Error: Fecha inválida.";
+    //
+    //                             return  {
+    //                                 "success": false,
+    //                                 "message": error
+    //                             }
+    //                         }
+    //                     } else {
+    //                         error = "Error: Tipo incorrecto en la columna '" + column + "'. Debe ser " + type + ".";
+    //
+    //                         return  {
+    //                             "success": false,
+    //                             "message": error
+    //                         }
+    //                     }
+    //                 } catch (e) {
+    //                     error = "Error: Tipo incorrecto en la columna '" + column + "'. Debe ser " + type + ".";
+    //
+    //                     return  {
+    //                         "success": false,
+    //                         "message": error
+    //                     }
+    //                 }
+    //             } else {
+    //                 error = "Error: Tipo incorrecto en la columna '" + column + "'. Debe ser " + type + ".";
+    //
+    //                 return  {
+    //                     "success": false,
+    //                     "message": error
+    //                 }
+    //             }
+    //         }
+    //         //Caso que la columna sea tipo CHAR
+    //         else {
+    //             //Primero se revisa que el valor sea un string
+    //             if (typeof values[i] == "string") {
+    //                 let charLen = +type.substring(5, type.length-1);
+    //
+    //                 //Se revisa que el string sea menor o igual al especificado
+    //                 if (values[i].length <= charLen) {
+    //                     schema[column] = values[i];
+    //                 } else {
+    //                     error = "Error: El string es de mayor tamaño al especificado, debe ser " + type + ".";
+    //
+    //                     return  {
+    //                         "success": false,
+    //                         "message": error
+    //                     }
+    //                 }
+    //             } else {
+    //                 error = "Error: Tipo incorrecto en la columna '" + column + "'. Debe ser " + type + ".";
+    //
+    //                 return  {
+    //                     "success": false,
+    //                     "message": error
+    //                 }
+    //             }
+    //         }
+    //     } else {
+    //         error = "Error: No existe la columna '" + column + "' en la tabla '" + table + "'.";
+    //
+    //         return  {
+    //             "success": false,
+    //             "message": error
+    //         }
+    //     }
+    // }
 
     //Se lee la informacion de la tabla
     let tableData = JSON.parse(fs.readFileSync(path + db + '/' + table + '.json', 'utf8'));
@@ -192,12 +216,33 @@ register_queries.insert = function(db, table, columns, values) {
     }
 
     //CHECK
+    if (data[table].constraints.hasOwnProperty("check")) {
+        let expression = data[table].constraints.check.expression;
+
+        let tempRes = navigateTree(dataColumns, schema, expression);
+
+        if (typeof tempRes == "string") {
+            return {
+                "success" : false,
+                "message" : tempRes
+            }
+        }
+        if (!tempRes) {
+            let error = "El registro que está tratando de ingresar no cumple con la condición de CHECK"Ñ
+            return {
+                "success" : false,
+                "message" : error
+            }
+        }
+    }
 
     //Se agrega el registro a la base de datos
     tableData.registers.push(schema);
+    data[table].registers = data[table].registers + 1;
 
     //Se guarda la información
     fs.writeFileSync(path + db + '/' + table + ".json", JSON.stringify(tableData));
+    fs.writeFileSync(path + db + "/__master.json", JSON.stringify(data));
 
     return {
         "success": true,
@@ -273,6 +318,27 @@ register_queries.update = function(db, table, columns, values, expression) {
         }
     }
 
+    //CHECK
+    if (data[table].constraints.hasOwnProperty("check")) {
+        let checkExpression = data[table].constraints.check.expression;
+
+        let tempRes = navigateTree(dataColumns, schema, checkExpression);
+
+        if (typeof tempRes == "string") {
+            return {
+                "success" : false,
+                "message" : tempRes
+            }
+        }
+        if (!tempRes) {
+            let error = "El registro que está tratando de ingresar no cumple con la condición de CHECK"Ñ
+            return {
+                "success" : false,
+                "message" : error
+            }
+        }
+    }
+
     //Se guarda la información
     if (cont > 0)
         fs.writeFileSync(path + db + '/' + table + ".json", JSON.stringify(tableData));
@@ -335,27 +401,291 @@ register_queries.delete = function(db, table, expression) {
     }
 }
 
-register_queries.select = function(columns, tables, expression) {
+register_queries.select = function(db, columns, tables, expression) {
+
     //FROM
     let dbData = JSON.parse(fs.readFileSync(path + db + '/__master.json', 'utf8'));
+    let tableData = {};
 
     //Se junta la informacion de todas las tablas definididas en el FROM
     let tablesInfo = {};
-    let newTable = {};
     for (let i = 0; i < tables.length; i++) {
         tablesInfo[tables[i]] = dbData[tables[i]].columns;
+
+        tableData[tables[i]] = JSON.parse(fs.readFileSync(path + db + '/' + tables[i] + '.json', 'utf8')).registers;
     }
 
-    //Se crea una nueva tabla haciendo el producto cartesiano de las tablas definidas
-    for (let i = 0; i < columns.length; i++) {
+    //Se validan que existen las columnas de expression
+    let newExp = validateTree(tablesInfo, expression);
+    if (typeof newExp == "string") {
+        return {
+            "success" : false,
+            "message" : newExp
+        }
+    } else {
+        expression = newExp;
+        console.log(expression);
+    }
 
+    //En caso que solo se use una tabla
+    if (tables.length == 1) {
+        let tempTable = [];
+        let regs = tableData[tables[0]];
+        let i = 0;
+        const iMax = regs.length;
+        for (; i < iMax; i++) {
+            let tempRes;
+            if (Object.keys(expression).length > 0) {
+                tempRes = navigateTree(tablesInfo, regs[i], expression);
+
+                if (typeof tempRes == "string")
+                    return {
+                        "success" : false,
+                        "message" : tempRes
+                    }
+
+            } else {
+                tempRes = true;
+            }
+
+            if (tempRes) {
+                if (columns == null) {
+                    tempTable.push(regs[i]);
+                } else {
+                    let tempObj = {};
+                    for (var key in columns)
+                        if (columns.hasOwnProperty(key)) {
+                            tempObj[key] = regs[key];
+                        }
+                    tempTable.push(tempObj);
+                }
+            }
+        }
+
+        let res = {
+            "success" : true,
+            "registers": tempTable,
+            "columns": tablesInfo
+        }
+
+        console.log(tempTable);
+
+        return res;
+
+    }
+    //En caso que sean mas de 2 tablas y haya que realizar producto cartesiano
+    else {
+        //Se validan que existan las columnas que se pidieron en SELECT
+        if (columns != null) {
+            let newTableSchema = validateSelectColumns(columns, tablesInfo);
+            if (typeof newTableSchema == "string")
+                return {
+                    "success" : false,
+                    "message" : newTableSchema
+                }
+        }
+
+        //Se realiza el producto cartesiano
+        const f = (a, b) => [].concat(...a.map(d => b.map(e => [].concat(d, e))));
+        const cartesian = (a, b, ...c) => (b ? cartesian(f(a, b), ...c) : a);
+
+        var newTable = [];
+        for (var key in tableData)
+            if (tableData.hasOwnProperty(key)) {
+                if (newTable.length == 0) {
+                    newTable = tableData[key];
+                } else {
+                    newTable = cartesian(newTable, tableData[key]);
+                }
+            }
+
+        // Se recorre toda la nueva tabla para ver los valores que cumplan con la condicion
+        // y separar las columnas que se indicaron en el SELECT
+        let tempTable = [];
+        let i = 0;
+        const iMax = newTable.length;
+        for (; i < iMax; i++) {
+            let obj = {};
+            for (var j = 0; j < tables.length; j++) {
+                for (var column in newTable[i][j]) {
+                    let str = tables[j] + "." + column;
+                    obj[str] = newTable[i][j][column];
+                }
+            }
+
+            let tempRes;
+            if (Object.keys(expression).length > 0) {
+                tempRes = navigateTree(tablesInfo, obj, expression);
+
+                if (typeof tempRes == "string")
+                    return {
+                        "success" : false,
+                        "message" : tempRes
+                    }
+
+            } else {
+                tempRes = true;
+            }
+
+            if (tempRes) {
+                if (columns == null) {
+                    tempTable.push(obj);
+                } else {
+                    let tempObj = {};
+                    for (var key in newTableSchema)
+                        if (newTableSchema.hasOwnProperty(key)) {
+                            tempObj[key] = obj[key];
+                        }
+                    tempTable.push(tempObj);
+                }
+            }
+        }
+
+        let res = {
+            "success" : true,
+            "registers": tempTable,
+            "columns": tablesInfo
+        }
+
+        console.log(tempTable);
+
+        return res;
     }
 }
 
-function navigateTree(columns, register, expression) {
+function validateSelectColumns(select, columns) {
+    var schema = {};
+    for (var columnKey in select)
+        if (select.hasOwnProperty(columnKey)) {
+
+            if (select[columnKey].table != null) {
+                schema[select[columnKey].table + "." + columnKey] = null;
+            } else {
+                let cont = 0;
+                let tempTable;
+                for (var key in columns)
+                    if (columns.hasOwnProperty(key)) {
+                        if (columns[key].hasOwnProperty(columnKey)) {
+                            cont++;
+                            tempTable = key;
+                        }
+                    }
+
+                if (cont == 0) {
+                    error = "No existe una columna con el nombre '" + op1.value + "'.";
+
+                    return error
+                } else if (cont > 1) {
+                    error =  "Existe más de una columna con el nombre '" + op1.value + "'.";
+
+                    return error
+                } else {
+                    schema[tempTable + "." + columnKey] = null;
+                }
+            }
+        }
+
+    return schema;
+}
+
+function validateTree(columns, expression) {
     let op1 = expression.operando1;
     let op2 = expression.operando2;
     let act = expression.operador;
+
+    if (op1.hasOwnProperty("operador1")) {
+        expression.operador1 = validateTree(op1);
+
+        if (typeof expression.operador1 == "string")
+            return expression.operador1
+    } else {
+        if (op1.type == "id") {
+            let cont = 0;
+            for (var key in columns)
+                if (columns.hasOwnProperty(key)) {
+                    if (columns[key].hasOwnProperty(op1.value)) {
+                        cont++;
+                        expression.operando1.type = "idTable";
+                        expression.operando1.value = {
+                            "table": key,
+                            "column": op1.value
+                        }
+                    }
+                }
+
+            if (cont == 0) {
+                error = "No existe una columna con el nombre '" + op1.value + "'.";
+
+                return error
+            } else if (cont > 1) {
+                error =  "Existe más de una columna con el nombre '" + op1.value + "'.";
+
+                return error
+            }
+        }
+    }
+    if (op2.hasOwnProperty("operador1")) {
+        expression.operador2 = validateTree(op2);
+
+        if (typeof expression.operador2 == "string")
+            return expression.operador2
+    } else {
+        if (op2.type == "id") {
+            let cont = 0;
+            for (var key in columns)
+                if (columns.hasOwnProperty(key)) {
+                    if (columns[key].hasOwnProperty(op2.value)) {
+                        cont++;
+                        expression.operando2.type = "idTable";
+                        expression.operando2.value = {
+                            "table": key,
+                            "column": op2.value
+                        }
+                    }
+                }
+
+            if (cont == 0) {
+                error = "No existe una columna con el nombre '" + op2.value + "'.";
+
+                return error
+            } else if (cont > 1) {
+                error =  "Existe más de una columna con el nombre '" + op2.value + "'.";
+
+                return error
+            }
+        }
+    }
+
+    return expression;
+
+}
+
+
+function navigateTree(columns, register, expression) {
+    let op1 = expression.operando1;
+    let act = expression.operador;
+    let op2;
+
+    if (act == "NOT") {
+        if (op1.hasOwnProperty("operador1")) {
+            let tempOp1 = {
+                "value": navigateTree(columns, register, op1),
+                "type": "BOOLEAN"
+            }
+            if (typeof tempOp1.value == "string")
+                return tempOp1.value;
+            op1 = tempOp1;
+        }
+        if (op1.type == "BOOLEAN") {
+            return !op1.value;
+        } else {
+            error = "Error: No puede usar el operando '" + act + "' con el tipo '" + op1.type + "'.";
+
+            return error
+        }
+    } else {
+        op2 = expression.operando2;
+    }
 
     if (op1.hasOwnProperty("operador1")) {
         let tempOp1 = {
@@ -377,7 +707,7 @@ function navigateTree(columns, register, expression) {
     }
 
     if (op1.type == "id") {
-        if (register.hasOwnProperty(op1.value)) {
+        if (columns.hasOwnProperty(op1.value)) {
             let tempOp1 = {
                 "value" : register[op1.value],
                 "type" : columns[op1.value].type.substring(0, 4) == 'CHAR' ? "CHAR" : columns[op1.value].type
@@ -391,7 +721,7 @@ function navigateTree(columns, register, expression) {
     }
 
     if (op2.type == "id") {
-        if (register.hasOwnProperty(op2.value)) {
+        if (columns.hasOwnProperty(op2.value)) {
             let tempOp2 = {
                 "value" : register[op2.value],
                 "type" : columns[op1.value].type.substring(0, 4) == 'CHAR' ? "CHAR" : columns[op1.value].type
@@ -399,6 +729,46 @@ function navigateTree(columns, register, expression) {
             op2 = tempOp2
         } else {
             error = "Error: No existe la columna '" + op2.value + "'.";
+
+            return error
+        }
+    }
+
+    if (op1.type == "idTable") {
+        if (columns.hasOwnProperty(op1.value.table)) {
+            if (columns[op1.value.table].hasOwnProperty(op1.value.column)) {
+                let tempOp1 = {
+                    "value" : register[op1.value.table + "." + op1.value.column],
+                    "type" : columns[op1.value.table][op1.value.column].type.substring(0, 4) == "CHAR" ? "CHAR" : columns[op1.value.table][op1.value.column].type
+                }
+                op1 = tempOp1;
+            } else {
+                let error = "Error: La columna '" + op1.value.column + "' no existe en la tabla '" + op1.value.table + "'.";
+
+                return error
+            }
+        } else {
+            let error = "Error: La tabla '" + op1.value.table + "' no fue definida."
+
+            return error
+        }
+    }
+
+    if (op2.type == "idTable") {
+        if (columns.hasOwnProperty(op2.value.table)) {
+            if (columns[op2.value.table].hasOwnProperty(op2.value.column)) {
+                let tempOp2 = {
+                    "value" : register[op2.value.table + "." + op2.value.column],
+                    "type" : columns[op2.value.table][op2.value.column].type.substring(0, 4) == "CHAR" ? "CHAR" : columns[op2.value.table][op2.value.column].type
+                }
+                op2 = tempOp2;
+            } else {
+                let error = "Error: La columna '" + op2.value.column + "' no existe en la tabla '" + op2.value.table + "'.";
+
+                return error
+            }
+        } else {
+            let error = "Error: La tabla '" + op2.value.table + "' no fue definida."
 
             return error
         }
