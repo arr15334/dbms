@@ -13,38 +13,51 @@ const path = './databases/';
 
 var sqlQuery = {data: []}
 
+
+
+/**
+ * Route serving query processing
+ * @name post/queries
+ * @memberof module:router/Databases
+ * @inner
+ * @param {string} path - Express path
+ * @param {callback} middlewear - Express middlewear
+ */
 router.post('/queries', function (req, res) {
-  // limpiar query anterior
-  sqlQuery = {data: []}
-  return Promise.resolve()
-    .then(() => {
-      return new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
-    })
-    .then((parser) => {
-      parser.feed(req.body['sql_query'])
-      return parser
-    })
-    .then((parser) => {
-      parseResult(parser.results[0][0][0])
-      //console.log(sqlQuery);
-      //const sqlObj = formatQuery()
-    })
-    .then(() => {
-      return formatQuery()
-    })
-    .then((query) => {
-      return routeQueries(query)
-    })
-    .then((result) => {
-      res.json(result)
-    })
-    .catch((err) => {
-      console.log(err);
-      res.json({
-        'success': false,
-        'message': err
-      })
-    })
+
+  messages = []
+
+  //Try to run every query
+  //If error catched return the error
+  try {
+    //Create the parser from nealey module, and the grammar
+    //Pass the queries from the req.body to the parser
+    //For every querie parsed send the code through routeQueries
+    const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
+
+    parser.feed(req.body['sql_query']);
+
+
+    //Iterate for every query, add the message to messages Array
+    for (var i in parser.results[0][0]) {
+      sqlQuery = {data: []}
+      parseResult(parser.results[0][0][i]);
+      messages.push(routeQueries(formatQuery()));
+
+      //If the query is unsuccessful return the message
+      if (!messages[messages.length - 1].success)
+        res.json({results: messages});
+    }
+
+    //Return response with all messages
+    res.json({results: messages});
+
+  } catch (err) {
+    res.json({
+      'success': false,
+      'message': err
+    });
+  }
 });
 
 // funcion para ordenar el query
@@ -159,15 +172,15 @@ function formatAst (l) {
 /**
  * Function for sorting the query with the necesary route
  * @param {Object} query - Object describing the information of the query
- * @param {string} [db=''] - String of the name of the database
  * @return {string} message - String that contains the message if the query was successful
  */
 function routeQueries(query) {
   const action = query.action
   const object = query.object
-  return getCurrentDatabase()
-    .then((db) => {
-      console.log(query)
+  const db = getCurrentDatabase();
+  // return getCurrentDatabase()
+  //   .then((db) => {
+  //     console.log(query)
       if (action === 'CREATE') {
         if (object === 'DATABASE') return db_queries.createDatabase(query.id.name)
         else if (object === 'TABLE') return table_queries.createTable(db, query.id.name, query.columns, query.constraints)
@@ -208,7 +221,7 @@ function routeQueries(query) {
       else {
         return 'Error: bad query'
       }
-    })
+    // })
   //Constant sort has the routes for every combination of action and object.
   /*
   const sort = {
@@ -250,13 +263,15 @@ function routeQueries(query) {
 }
 
 function getCurrentDatabase () {
-  return Promise.resolve()
-    .then(() => {
-      return JSON.parse(fs.readFileSync(path + 'currentdb.json', 'utf8'));
-    })
-    .then((data) => {
-      return data.current
-    })
+  return JSON.parse(fs.readFileSync(path + 'currentdb.json', 'utf8')).current;
+  // return Promise.resolve()
+  //   .then(() => {
+  //     return JSON.parse(fs.readFileSync(path + 'currentdb.json', 'utf8'));
+  //   })
+  //   .then((data) => {
+  //     console.log(data);
+  //     return data.current
+  //   })
 }
 
 function extractObjectFromList (l) {
