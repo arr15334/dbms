@@ -48,7 +48,6 @@ router.post('/queries', function (req, res) {
       if (!messages[messages.length - 1].success)
         res.json({results: messages});
     }
-
     //Return response with all messages
     res.json({results: messages});
 
@@ -83,12 +82,16 @@ function formatQuery () {
     columns: {},
     constraints: {},
     columnsToAdd: [],
-    values: []
+    values: [],
+	select: {
+		columns: [],
+		tables: []
+	}
   }
   let columns = []
   let constraints = []
   let isColumn = 0
-  let isConstraint = 0
+  let isTable = 0
   for (const statement of sqlQuery.data) {
     if (statement) {
       if (statement.type === 'command') {
@@ -98,7 +101,13 @@ function formatQuery () {
         finalQuery.object = statement.value
       }
       if (statement.type === 'id' && !isColumn) {
-        if (!finalQuery.id.name) {
+		if (finalQuery.action === 'SELECT') {
+          if (!isTable) {
+			finalQuery.select.columns.push(statement.value)
+          } else {
+			finalQuery.select.tables.push(statement.value)
+		  }
+        } else if (!finalQuery.id.name) {
           finalQuery.id.name = statement.value
         } else if (finalQuery.action === 'INSERT' || finalQuery.action === 'SET') {
           finalQuery.columnsToAdd.push(statement.value)
@@ -142,8 +151,16 @@ function formatQuery () {
       }
       if (statement.type === 'INT' || statement.type === 'FLOAT' || statement.type === 'DATE' || statement.type === 'CHAR' ) {
         if (finalQuery.action === 'SET') finalQuery.values.push(statement)
+		else if (finalQuery.action === 'INSERT' ) finalQuery.values.push(statement)
         else finalQuery.values.push(statement.value)
       }
+      if (statement.type === 'keyword') {
+        if (statement.value === 'FROM') isTable++
+      }
+	  if (statement.type === '*') {
+		  finalQuery.object = statement.value;
+	  }
+		  
       if (statement.operando1 || statement.operador) {
         finalQuery.expression = statement
       }
@@ -217,7 +234,10 @@ function routeQueries(query) {
         return register_queries.update(db, query.id.name, query.columnsToAdd, query.values, query.expression || {})
       } else if (action === 'DELETE') {
         return register_queries.delete(db, query.id.name, query.expression || {})
-      }
+      } else if (action === 'SELECT') {
+		  if (query.object) return register_queries.select(db, null, query.tables, query.expression || {})
+		  else return register_queries.select(db, query.columns, query.tables, query.expression || {})
+	  }
       else {
         return 'Error: bad query'
       }

@@ -1,0 +1,1 @@
+{"student":{"columns":{"carnet":{"type":"INT"},"name":{"type":"CHAR(10)"}},"schema":{"carnet":null,"name":null},"constraints":{"primaryKey":{"name":"id","elements":["carnet"]}}}}
