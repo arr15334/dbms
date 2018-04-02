@@ -13,8 +13,6 @@ const path = './databases/';
 
 var sqlQuery = {data: []}
 
-
-
 /**
  * Route serving query processing
  * @name post/queries
@@ -42,6 +40,7 @@ router.post('/queries', function (req, res) {
     for (var i in parser.results[0][0]) {
       sqlQuery = {data: []}
       parseResult(parser.results[0][0][i]);
+      console.log(formatQuery());
       messages.push(routeQueries(formatQuery()));
 
       //If the query is unsuccessful return the message
@@ -86,13 +85,15 @@ function formatQuery () {
     values: [],
 	select: {
 		columns: [],
-		tables: []
+		tables: [],
+    order: {}
 	}
   }
   let columns = []
   let constraints = []
   let isColumn = 0
   let isTable = 0
+  let isOrder = 0
   for (const statement of sqlQuery.data) {
     if (statement) {
       if (statement.type === 'command') {
@@ -102,11 +103,21 @@ function formatQuery () {
         finalQuery.object = statement.value
       }
       if (statement.type === 'id' && !isColumn) {
-		if (finalQuery.action === 'SELECT') {
-          if (!isTable) {
-			         finalQuery.select.columns.push(statement.value)
-          } else {
-			       finalQuery.select.tables.push(statement.value)
+		      if (finalQuery.action === 'SELECT') {
+            if (isOrder && !(finalQuery.order)) {
+              finalQuery.select.order.column = {}
+              finalQuery.select.order.order = 'DESC'
+            }
+            if (isOrder && (finalQuery.select.order)) {
+              if (statement.value === 'ASC' || statement.value === 'DESC') {
+                finalQuery.select.order.order = statement.value
+              } else {
+                finalQuery.select.order.column = statement.value
+              }
+            } else if (!isTable) {
+  			       finalQuery.select.columns.push(statement.value)
+            } else {
+  			       finalQuery.select.tables.push(statement.value)
 		  }
         } else if (!finalQuery.id.name) {
           finalQuery.id.name = statement.value
@@ -157,6 +168,7 @@ function formatQuery () {
       }
       if (statement.type === 'keyword') {
         if (statement.value === 'FROM') isTable++
+        if (statement.value === 'ORDER') isOrder++
       }
 	  if (statement.type === '*') {
 		  finalQuery.object = statement.value;
@@ -167,8 +179,6 @@ function formatQuery () {
       }
     }
   }
-  // finalQuery.columns = columns
-  // finalQuery.constraints = constraints
   return finalQuery
 }
 
@@ -197,9 +207,6 @@ function routeQueries(query) {
   const action = query.action
   const object = query.object
   const db = getCurrentDatabase();
-  // return getCurrentDatabase()
-  //   .then((db) => {
-  //     console.log(query)
       if (action === 'CREATE') {
         if (object === 'DATABASE') return db_queries.createDatabase(query.id.name)
         else if (object === 'TABLE') return table_queries.createTable(db, query.id.name, query.columns, query.constraints)
@@ -237,63 +244,16 @@ function routeQueries(query) {
       } else if (action === 'DELETE') {
         return register_queries.delete(db, query.id.name, query.expression || {})
       } else if (action === 'SELECT') {
-		  if (query.object) return register_queries.select(db, null, query.select.tables, query.expression || {})
-		  else return register_queries.select(db, query.columns, query.select.tables, query.expression || {})
+		  if (query.object) return register_queries.select(db, null, query.select.tables, query.expression || {}, query.select.order)
+		  else return register_queries.select(db, query.columns, query.select.tables, query.expression || {}, query.select.order)
 	  }
       else {
         return 'Error: bad query'
       }
-    // })
-  //Constant sort has the routes for every combination of action and object.
-  /*
-  const sort = {
-    'CREATE': {
-      'TABLE': table_queries.createTable(db, query.id.name, query.columns, query.constraints),
-      'DATABASE': db_queries.createDatabase(query.id.name),
-    },
-    'RENAME': {
-      'TABLE': table_queries.renameTable(db, query.id.name, query.id.newName),
-      'DATABASE': db_queries.renameDatabase(query.id.name, query.id.newName),
-    },
-    'DROP': {
-      // table_queries.deleteColumn(db, query.id.name, query.columns.name)
-      'COLUMN': console.log('delete'),
-      'CONSTRAINT': table_queries.deleteConstraint(db, query.id.name, query.constraints.name),
-      'TABLES': table_queries.deleteTable(db, query.id.name),
-      'DATABASE': db_queries.deleteDatabase(query.id.name),
-    },
-    'SHOW': {
-      'COLUMNS': table_queries.showColumns(db, query.id.name),
-      'TABLES': table_queries.showTables(db),
-      'DATABASES': db_queries.showDatabases(),
-    },
-    // 'USE': {'DATABASE': db_queries.useDatabase(query.id.name)},
-    'USE': {'DATABASE': console.log('use db')},
-    'ADD': {
-      'COLUMN': table_queries.addColumn(db,query.id.name, query.columns.name, query.columns.name ? query.columns.name.type : '', query.constraints),
-      'CONSTRAINT': table_queries.addConstraint(db, query.id.name, query.constraints[Object.keys(query.constraints)[0]]),
-    },
-  }
-<<<<<<< HEAD
-
-  //The function is called by a element of sort, and returns a message
-  return sort[query.action][query.object];
-=======
-*/
-  //The function is called by an element of sort, and returns a message
-  // return sort[query.action][query.object];
 }
 
 function getCurrentDatabase () {
   return JSON.parse(fs.readFileSync(path + 'currentdb.json', 'utf8')).current;
-  // return Promise.resolve()
-  //   .then(() => {
-  //     return JSON.parse(fs.readFileSync(path + 'currentdb.json', 'utf8'));
-  //   })
-  //   .then((data) => {
-  //     console.log(data);
-  //     return data.current
-  //   })
 }
 
 function extractObjectFromList (l) {
