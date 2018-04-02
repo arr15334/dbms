@@ -123,6 +123,8 @@ function formatQuery () {
       if (statement.type === 'constraintKeyword') {
         if (finalQuery.action === 'ADD') {
           finalQuery.object = statement.value
+        } else if (finalQuery.action === 'DROP') {
+          finalQuery.object = statement.value
         }
       }
       if (statement.type === 'INT' || statement.type === 'FLOAT' || statement.type === 'DATE' || statement.type === 'CHAR' ) {
@@ -176,7 +178,7 @@ function routeQueries(query) {
           if (object === 'DATABASE') return db_queries.deleteDatabase(query.id.name)
           else if(object === 'TABLE') return table_queries.deleteTable(db, query.id.name)
           else if(object === 'COLUMN') return table_queries.deleteColumn(db, query.id.name, query.columns.name)
-          else if(object === 'CONSTRAINT') return table_queries.deleteConstraint(db, query.id.name, query.constraints.name)
+          else if(object === 'CONSTRAINT') return table_queries.deleteConstraint(db, query.id.name, query.id.newName)
           else return 'Error: bad query'
       } else if (action === 'RENAME') {
           if (object === 'TABLE') return table_queries.renameTable(db, query.id.name, query.id.newName)
