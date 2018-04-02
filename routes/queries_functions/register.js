@@ -8,15 +8,15 @@ var tablesCache = {};
 
 register_queries.insert = function(db, table, columns, values) {
     //Se lee la informacion en el archivo maestro de la base de datos
-    let data;
-    if (tablesCache.hasOwnProperty(db)) {
-        data = tablesCache[db].data;
-    } else {
-        data = JSON.parse(fs.readFileSync(path + db + '/__master.json', 'utf8'));
-        tablesCache[db] = {};
-        tablesCache[db].data = data;
-        tablesCache[db].tables = {};
-    }
+    // let data;
+    // if (tablesCache.hasOwnProperty(db)) {
+    //     data = tablesCache[db].data;
+    // } else {
+    let data = JSON.parse(fs.readFileSync(path + db + '/__master.json', 'utf8'));
+    //     tablesCache[db] = {};
+    //     tablesCache[db].data = data;
+    //     tablesCache[db].tables = {};
+    // }
 
     if (!data.hasOwnProperty(table)) {
         let error = "No existe la tabla '" + table + "' en la Base de Datos '" + db + "'.";
@@ -65,13 +65,13 @@ register_queries.insert = function(db, table, columns, values) {
     }
 
     //Se lee la informacion de la tabla
-    var tableData;
-    if (tablesCache[db].tables.hasOwnProperty(table)) {
-        tableData = tablesCache[db].tables[table];
-    } else {
-        tableData = JSON.parse(fs.readFileSync(path + db + '/' + table + '.json', 'utf8'));
-        tablesCache[db].tables[table] = tableData;
-    }
+    // var tableData;
+    // if (tablesCache[db].tables.hasOwnProperty(table)) {
+    //     tableData = tablesCache[db].tables[table];
+    // } else {
+        let tableData = JSON.parse(fs.readFileSync(path + db + '/' + table + '.json', 'utf8'));
+    //     tablesCache[db].tables[table] = tableData;
+    // }
 
 
     //Se revisan los valores de la Primary Key
@@ -132,9 +132,9 @@ register_queries.insert = function(db, table, columns, values) {
     //Se guarda la información
 
     fs.writeFileSync(path + db + '/' + table + ".json", JSON.stringify(tableData));
-    tablesCache[db].tables[table] = tableData;
+    // tablesCache[db].tables[table] = tableData;
     fs.writeFileSync(path + db + "/__master.json", JSON.stringify(data));
-    tablesCache[db].data = data;
+    // tablesCache[db].data = data;
 
     return {
         "success": true,
@@ -293,7 +293,7 @@ register_queries.delete = function(db, table, expression) {
     }
 }
 
-register_queries.select = function(db, columns, tables, expression) {
+register_queries.select = function(db, columns, tables, expression, orderby) {
 
     //FROM
     let dbData = JSON.parse(fs.readFileSync(path + db + '/__master.json', 'utf8'));
@@ -356,10 +356,18 @@ register_queries.select = function(db, columns, tables, expression) {
             }
         }
 
+        orderby.column = verifyOrderColumn(tablesInfo, orderby.column);
+        if (typeof orderby.column == "object") {
+            return orderby.column;
+        } else {
+            tempTable = sort(tempTable, orderby.column, orderby.order);
+        }
+
         let res = {
             "success" : true,
             "registers": tempTable,
-            "columns": tablesInfo
+            "columns": tablesInfo,
+            "message" : "Elementos: " + tempTable.length + "."
         }
 
         // console.log(tempTable);
@@ -435,15 +443,110 @@ register_queries.select = function(db, columns, tables, expression) {
             }
         }
 
+        orderby.column = verifyOrderColumn(tablesInfo, orderby.column);
+        if (typeof orderby.column == "object") {
+            return orderby.column;
+        } else {
+            tempTable = sort(tempTable, orderby.column, orderby.order);
+        }
+
         let res = {
             "success" : true,
             "registers": tempTable,
-            "columns": tablesInfo
+            "columns": tablesInfo,
+            "message" : "Elementos: " + tempTable.length + "."
         }
 
         // console.log(tempTable);
 
         return res;
+    }
+}
+
+function mergeSort (arr, column, order) {
+    if (arr.length === 1) {
+        return arr
+    }
+
+    const middle = Math.floor(arr.length / 2);
+    const left = arr.slice(0, middle);
+    const right = arr.slice(middle);
+
+    return merge(
+        mergeSort(left, column, order),
+        mergeSort(right, column, order),
+        order
+    )
+}
+
+function merge (left, right, order) {
+    let result = [];
+    let indexLeft = 0;
+    let indexRight = 0;
+
+    while (indexLeft < left.length && indexRight < right.length) {
+        if (order == "DESC") {
+            if (left[indexLeft].column < right[indexRight].column) {
+                result.push(left[indexLeft]);
+                indexLeft++;
+            } else {
+                result.push(right[indexRight]);
+                indexRight++;
+            }
+        } else {
+            if (left[indexLeft].column > right[indexRight].column) {
+                result.push(left[indexLeft]);
+                indexLeft++;
+            } else {
+                result.push(right[indexRight]);
+                indexRight++;
+            }
+        }
+    }
+
+    return result.concat(left.slice(indexLeft)).concat(right.slice(indexRight))
+}
+
+function verifyOrderColumn(columns, column) {
+    if (column.hasOwnProperty(table)) {
+        if (columns.hasOwnProperty(table)) {
+            if (columns[table].hasOwnProperty(column)) {
+                return table + "." + column;
+            } else {
+                return {
+                    "success" : false,
+                    "message" : "La columna '" + column + "' no existe en la tabla '" + tabla + "'."
+                }
+            }
+        } else {
+            return {
+                "success" : false,
+                "message" : "La tabla '" + table + "' no esta definida."
+            }
+        }
+    } else {
+        let tempTable;
+        let cont = 0;
+        for (var key in columns)
+            if (columns.hasOwnProperty(key)) {
+                if (columns[key].hasOwnProperty(column)) {
+                    cont++;
+                    tempTable = key;
+                }
+            }
+        if (cont > 1) {
+            return {
+                "success" : false,
+                "message" : "Existe más de una columna con el nombre '" + column + "'."
+            }
+        } else if (cont == 0) {
+            return {
+                "success" : false,
+                "message" : "No existe la columna '" + column + "'."
+            }
+        } else {
+            return tempTable + "." + column;
+        }
     }
 }
 
