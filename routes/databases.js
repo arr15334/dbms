@@ -243,8 +243,13 @@ function routeQueries(query) {
       } else if (action === 'DELETE') {
         return register_queries.delete(db, query.id.name, query.expression || {})
       } else if (action === 'SELECT') {
-		  if (query.object) return register_queries.select(db, null, query.select.tables, query.expression || {}, query.select.order)
-		  else return register_queries.select(db, query.columns, query.select.tables, query.expression || {}, query.select.order)
+        if (query.select.order.column) {
+            if (query.object) return register_queries.select(db, null, query.select.tables, query.expression || {}, query.select.order)
+        } else {
+          if (query.object) return register_queries.select(db, null, query.select.tables, query.expression || {}, null)
+            else return register_queries.select(db, query.columns, query.select.tables, query.expression || {}, null)
+        }
+
 	  }
       else {
         return 'Error: bad query'
