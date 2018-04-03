@@ -348,9 +348,7 @@ register_queries.select = function(db, columns, tables, expression, orderby) {
                 } else {
                     let tempObj = {};
                     for (var key in columns)
-                        if (columns.hasOwnProperty(key)) {
                             tempObj[key] = regs[key];
-                        }
                     tempTable.push(tempObj);
                 }
             }
